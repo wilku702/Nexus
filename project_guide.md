@@ -1,4 +1,4 @@
-# DataLens: Natural Language Data Catalog Agent
+# Nexus: Natural Language Data Catalog Agent
 
 ## Overview
 
@@ -71,7 +71,7 @@ Use a publicly available dataset loaded into PostgreSQL. Good options:
 **Goal:** User types a question, agent generates SQL, runs it, returns an answer.
 
 #### 1.1 Database Setup
-- Install PostgreSQL locally (or use Docker: `docker run --name datalens-db -e POSTGRES_PASSWORD=password -p 5432:5432 -d postgres`)
+- Install PostgreSQL locally (or use Docker: `docker run --name nexus-db -e POSTGRES_PASSWORD=password -p 5432:5432 -d postgres`)
 - Load your chosen dataset
 - Verify you can connect and run queries via `psycopg2`
 
