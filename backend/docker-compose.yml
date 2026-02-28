@@ -28,24 +28,22 @@ version: "3.9"
 
 services:
   db:
-    # TODO: Set the Docker image to postgres:15
-    image: # TODO: specify the PostgreSQL image and version tag
+    image: postgres:15
 
-    # TODO: Set environment variables for the database
-    # environment:
-    #   POSTGRES_DB: ???        # database name (use "nexus")
-    #   POSTGRES_USER: ???      # username
-    #   POSTGRES_PASSWORD: ???  # password (match your .env file)
+    environment:
+      POSTGRES_DB: nexus
+      POSTGRES_USER: nexus
+      POSTGRES_PASSWORD: nexus
 
     # TODO: Map port 5432 on your machine to 5432 in the container
-    # ports:
-    #   - "???:???"
+    ports:
+      - "5455:5432"
 
     # TODO: Mount volumes
-    # volumes:
-    #   - ???:/docker-entrypoint-initdb.d/  # Chinook SQL init script
-    #   - ???:/var/lib/postgresql/data       # named volume for persistence
+    volumes:
+      - ./scripts/Chinook_PostgreSql.sql:/docker-entrypoint-initdb.d/Chinook_PostgreSql.sql  # Chinook SQL init script
+      - pgdata:/var/lib/postgresql/data       # named volume for persistence
 
 # TODO: Define named volumes
-# volumes:
-#   ???:
+volumes:
+  pgdata:

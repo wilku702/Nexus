@@ -30,7 +30,23 @@ def verify_connection():
       PlaylistTrack, Track
     """
     # TODO: Implement connection and verification
-    pass
+    # pass
+    try:
+      conn = psycopg2.connect(Config.DATABASE_URL)
+      cursor = conn.cursor()
+
+      cursor.execute("SELECT table_name from information_schema.tables WHERE table_schema = 'public'")
+      tables = cursor.fetchall()
+
+      for (table,) in tables:
+        cursor.execute(f"SELECT COUNT(*) from {table}")
+        print(f"{table}: {cursor.fetchall()[0]} rows")
+
+      print(f"\nFound {len(tables)} tables, all OK")
+      cursor.close()
+      conn.close()
+    except Exception as e:
+      print(f"Error connecting to PostgreSQL: {e}")
 
 
 def run_init_sql():
@@ -42,7 +58,21 @@ def run_init_sql():
       3. Confirm the query_log table was created
     """
     # TODO: Implement init.sql execution
-    pass
+    # pass
+    try:
+      conn = psycopg2.connect(Config.DATABASE_URL)
+      cursor = conn.cursor()
+
+      sql = open("scripts/init.sql").read()
+      cursor.execute(sql)
+      conn.commit()
+
+      print("query_log table created successfully")
+      cursor.close()
+      conn.close()
+      
+    except Exception as e:
+      print(f"Error connecting to PostgreSQL: {e}")
 
 
 if __name__ == "__main__":

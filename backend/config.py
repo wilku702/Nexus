@@ -12,7 +12,7 @@ class Config:
     """
 
     DATABASE_URL: str = os.getenv(
-        "DATABASE_URL", "postgresql://nexus:nexus@localhost:5432/nexus"
+        "DATABASE_URL", "postgresql://nexus:nexus@localhost:5455/nexus"
     )
     LLM_API_KEY: str = os.getenv("LLM_API_KEY", "")
     LLM_MODEL: str = os.getenv("LLM_MODEL", "gpt-4o")
