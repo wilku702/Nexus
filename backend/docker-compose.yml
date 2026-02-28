@@ -1,0 +1,51 @@
+# docker-compose.yml — PostgreSQL service for Nexus
+#
+# TODO: Complete this file to run PostgreSQL via Docker.
+# Reference: https://hub.docker.com/_/postgres
+#
+# Requirements:
+#   - Use the postgres:15 image
+#   - Expose port 5432
+#   - Set POSTGRES_DB, POSTGRES_USER, POSTGRES_PASSWORD via environment
+#   - Mount the Chinook SQL file to /docker-entrypoint-initdb.d/ so the
+#     database seeds automatically on first startup
+#   - Use a named volume so data persists across container restarts
+#
+# Usage:
+#   docker compose up -d        # start in background
+#   docker compose down         # stop
+#   docker compose down -v      # stop and delete data volume
+#
+# Hints:
+#   - The "services" key defines each container
+#   - "environment" sets env vars inside the container
+#   - "ports" maps host:container ports
+#   - "volumes" mounts files/dirs and named volumes
+#   - Files in /docker-entrypoint-initdb.d/ run automatically on first start
+#   - Download Chinook SQL from: https://github.com/lerocha/chinook-database
+
+version: "3.9"
+
+services:
+  db:
+    # TODO: Set the Docker image to postgres:15
+    image: # TODO: specify the PostgreSQL image and version tag
+
+    # TODO: Set environment variables for the database
+    # environment:
+    #   POSTGRES_DB: ???        # database name (use "nexus")
+    #   POSTGRES_USER: ???      # username
+    #   POSTGRES_PASSWORD: ???  # password (match your .env file)
+
+    # TODO: Map port 5432 on your machine to 5432 in the container
+    # ports:
+    #   - "???:???"
+
+    # TODO: Mount volumes
+    # volumes:
+    #   - ???:/docker-entrypoint-initdb.d/  # Chinook SQL init script
+    #   - ???:/var/lib/postgresql/data       # named volume for persistence
+
+# TODO: Define named volumes
+# volumes:
+#   ???:

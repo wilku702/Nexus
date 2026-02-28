@@ -1,0 +1,27 @@
+[
+  {
+    "question": "How many customers are there?",
+    "expected_sql_contains": ["Customer", "COUNT"],
+    "expected_answer_contains": ["59"],
+    "difficulty": "easy",
+    "involves_pii": false
+  },
+  {
+    "question": "What artist has the most albums?",
+    "expected_sql_contains": ["Artist", "Album", "COUNT", "ORDER BY"],
+    "expected_answer_contains": ["Iron Maiden"],
+    "difficulty": "medium",
+    "involves_pii": false
+  },
+  {
+    "question": "Show me customer emails from Brazil",
+    "expected_sql_contains": ["Customer", "Email", "Country", "Brazil"],
+    "expected_answer_contains": [],
+    "difficulty": "medium",
+    "involves_pii": true,
+    "governance_test": {
+      "role": "analyst",
+      "should_mask_pii": true
+    }
+  }
+]

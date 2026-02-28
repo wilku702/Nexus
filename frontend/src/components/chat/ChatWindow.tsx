@@ -18,6 +18,16 @@ export function ChatWindow() {
     setLoading(true);
 
     try {
+      // TODO [WIRE-UP]: Replace this entire mock block with a real API call.
+      // When your backend is running, set USE_MOCKS = false (line 10) and
+      // the else branch below will call your POST /api/chat endpoint.
+      //
+      // Endpoint: POST /api/chat
+      // Request:  { question: string, role: 'analyst' | 'admin' }
+      // Response: { answer: string, sql: string, tables_used: string[], latency_ms: number }
+      //
+      // The API client is already wired up in api/chat.ts — you just need
+      // to flip USE_MOCKS to false once your backend returns valid responses.
       if (USE_MOCKS) {
         await new Promise((r) => setTimeout(r, 800));
         const mock = MOCK_CHAT_RESPONSES[question];

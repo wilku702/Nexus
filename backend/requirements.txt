@@ -1,0 +1,12 @@
+# Python dependencies for Nexus backend
+flask
+flask-cors
+psycopg2-binary
+langchain
+langchain-openai
+langchain-anthropic
+langchain-core
+langchain-community
+pyyaml
+sqlparse
+python-dotenv

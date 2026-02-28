@@ -15,6 +15,13 @@ export function AuditLogViewer() {
 
   useEffect(() => {
     setLoading(true);
+    // TODO [WIRE-UP]: Replace mock data with a real API call.
+    // Endpoint: GET /api/audit
+    // Response: [{ id, timestamp, user_role, original_question, generated_sql,
+    //              was_pii_filtered, result_row_count, latency_ms, llm_model_used }, ...]
+    // Use: import { fetchAuditLog } from '../../api/audit';
+    //      const entries = await fetchAuditLog();
+    //      setEntries(entries);
     setTimeout(() => {
       setEntries(MOCK_AUDIT_ENTRIES);
       setLoading(false);

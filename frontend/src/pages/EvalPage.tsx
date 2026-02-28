@@ -11,6 +11,13 @@ export function EvalPage() {
     setRunning(true);
     setError(null);
     try {
+      // TODO [WIRE-UP]: Replace mock delay with a real API call.
+      // Endpoint: POST /api/evaluate
+      // Request:  {} (empty body)
+      // Response: { run_id, timestamp, summary, by_difficulty, test_cases }
+      // Use: import { runEvaluation } from '../api/evaluate';
+      //      const report = await runEvaluation();
+      //      setReport(report);
       await new Promise((r) => setTimeout(r, 2000));
       setReport(MOCK_EVAL_REPORT);
     } catch (err) {

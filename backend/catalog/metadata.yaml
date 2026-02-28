@@ -1,0 +1,154 @@
+# Metadata Catalog — Chinook Database
+#
+# This file describes every table and column the AI agent can query.
+# The agent reads this to understand what data exists, what columns mean,
+# and which ones contain PII.
+#
+# Structure per table:
+#   table_name        — exact PostgreSQL table name (PascalCase)
+#   description       — plain-English explanation of what this table stores
+#   owner             — team that owns this data
+#   governance_level  — "public" | "internal" | "restricted"
+#   columns           — list of column metadata
+#
+# Structure per column:
+#   column_name     — exact column name (PascalCase, must match DB)
+#   data_type       — PostgreSQL data type
+#   description     — what this column contains
+#   is_pii          — true if personally identifiable information
+#   sample_values   — 2-3 example values (helps the LLM understand the data)
+#   governance_tag  — "public" | "pii" | "sensitive"
+#
+# Governance tags:
+#   public    — safe for anyone (genre names, track titles, etc.)
+#   pii       — personally identifiable (emails, phones, addresses)
+#   sensitive — business-sensitive but not personal (revenue, salaries)
+
+tables:
+  # ──────────────────────────────────────────────
+  # EXAMPLE — Customer table (fully filled in)
+  # Use this as a reference pattern for the remaining 10 tables.
+  # ──────────────────────────────────────────────
+  - table_name: "Customer"
+    description: "Stores customer account information including contact details and location"
+    owner: "sales_team"
+    governance_level: "internal"
+    columns:
+      - column_name: "CustomerId"
+        data_type: "integer"
+        description: "Primary key, unique customer identifier"
+        is_pii: false
+        sample_values: ["1", "2", "3"]
+        governance_tag: "public"
+      - column_name: "FirstName"
+        data_type: "varchar(40)"
+        description: "Customer first name"
+        is_pii: true
+        sample_values: ["Luís", "Leonie"]
+        governance_tag: "pii"
+      - column_name: "LastName"
+        data_type: "varchar(20)"
+        description: "Customer last name"
+        is_pii: true
+        sample_values: ["Gonçalves", "Köhler"]
+        governance_tag: "pii"
+      - column_name: "Company"
+        data_type: "varchar(80)"
+        description: "Customer company name (nullable)"
+        is_pii: false
+        sample_values: ["Embraer", "JetBrains"]
+        governance_tag: "public"
+      - column_name: "Email"
+        data_type: "varchar(60)"
+        description: "Customer email address"
+        is_pii: true
+        sample_values: ["luisg@embraer.com.br"]
+        governance_tag: "pii"
+      - column_name: "Phone"
+        data_type: "varchar(24)"
+        description: "Customer phone number"
+        is_pii: true
+        sample_values: ["+55 (12) 3923-5555"]
+        governance_tag: "pii"
+      - column_name: "Address"
+        data_type: "varchar(70)"
+        description: "Customer street address"
+        is_pii: true
+        sample_values: ["Av. Brigadeiro Faria Lima, 2170"]
+        governance_tag: "pii"
+      - column_name: "City"
+        data_type: "varchar(40)"
+        description: "Customer city"
+        is_pii: true
+        sample_values: ["São José dos Campos", "Stuttgart"]
+        governance_tag: "pii"
+      - column_name: "State"
+        data_type: "varchar(40)"
+        description: "Customer state or province (nullable)"
+        is_pii: true
+        sample_values: ["SP", "QC"]
+        governance_tag: "pii"
+      - column_name: "Country"
+        data_type: "varchar(40)"
+        description: "Customer country"
+        is_pii: false
+        sample_values: ["Brazil", "Germany", "Canada"]
+        governance_tag: "public"
+      - column_name: "PostalCode"
+        data_type: "varchar(10)"
+        description: "Customer postal/zip code"
+        is_pii: true
+        sample_values: ["12227-000", "70174"]
+        governance_tag: "pii"
+      - column_name: "Fax"
+        data_type: "varchar(24)"
+        description: "Customer fax number (nullable)"
+        is_pii: true
+        sample_values: ["+55 (12) 3923-5566"]
+        governance_tag: "pii"
+      - column_name: "SupportRepId"
+        data_type: "integer"
+        description: "Foreign key to Employee table — assigned support representative"
+        is_pii: false
+        sample_values: ["3", "4", "5"]
+        governance_tag: "public"
+
+  # ──────────────────────────────────────────────
+  # TODO: Add the remaining 10 Chinook tables below.
+  # Follow the exact same pattern as Customer above.
+  #
+  # Tables to add:
+  #   1. Album       (AlbumId, Title, ArtistId)
+  #   2. Artist      (ArtistId, Name)
+  #   3. Employee    (EmployeeId, LastName, FirstName, Title, ReportsTo,
+  #                   BirthDate, HireDate, Address, City, State, Country,
+  #                   PostalCode, Phone, Fax, Email)
+  #                   ⚠️  Employee has MANY PII columns — tag them all
+  #   4. Genre       (GenreId, Name)
+  #   5. Invoice     (InvoiceId, CustomerId, InvoiceDate, BillingAddress,
+  #                   BillingCity, BillingState, BillingCountry,
+  #                   BillingPostalCode, Total)
+  #                   ⚠️  Total is "sensitive" (revenue data)
+  #   6. InvoiceLine (InvoiceLineId, InvoiceId, TrackId, UnitPrice, Quantity)
+  #                   ⚠️  UnitPrice is "sensitive"
+  #   7. MediaType   (MediaTypeId, Name)
+  #   8. Playlist    (PlaylistId, Name)
+  #   9. PlaylistTrack (PlaylistId, TrackId)
+  #  10. Track       (TrackId, Name, AlbumId, MediaTypeId, GenreId,
+  #                   Composer, Milliseconds, Bytes, UnitPrice)
+  #                   ⚠️  UnitPrice is "sensitive"
+  #
+  # Tips:
+  #   - Look at the actual Chinook data for sample_values
+  #   - Mark revenue/price columns as governance_tag: "sensitive"
+  #   - Mark personal contact info as governance_tag: "pii"
+  #   - Everything else is governance_tag: "public"
+  # ──────────────────────────────────────────────
+
+  # - table_name: "Album"
+  #   description: "..."
+  #   owner: "..."
+  #   governance_level: "..."
+  #   columns:
+  #     - column_name: "AlbumId"
+  #       ...

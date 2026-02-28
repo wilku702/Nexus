@@ -9,7 +9,12 @@ export function CatalogBrowser() {
 
   useEffect(() => {
     setLoadingList(true);
-    // Simulate API fetch
+    // TODO [WIRE-UP]: Replace mock data with a real API call.
+    // Endpoint: GET /api/catalog/tables
+    // Response: [{ table_name, description, owner, governance_level, column_count }, ...]
+    // Use: import { fetchTables } from '../../api/catalog';
+    //      const tables = await fetchTables();
+    //      setTables(tables);
     setTimeout(() => {
       setTables(MOCK_TABLES);
       setLoadingList(false);
@@ -18,7 +23,12 @@ export function CatalogBrowser() {
 
   const handleSelect = (name: string) => {
     setLoadingDetail(true);
-    // Simulate API fetch
+    // TODO [WIRE-UP]: Replace mock data with a real API call.
+    // Endpoint: GET /api/catalog/tables/:name
+    // Response: { table_name, description, owner, governance_level, column_count, columns: [...] }
+    // Use: import { fetchTableDetail } from '../../api/catalog';
+    //      const detail = await fetchTableDetail(name);
+    //      setSelectedTable(detail);
     setTimeout(() => {
       setSelectedTable(MOCK_TABLE_DETAIL[name] ?? null);
       setLoadingDetail(false);
