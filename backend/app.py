@@ -13,10 +13,13 @@ Run with:
   python app.py                 → starts on http://localhost:5000
 """
 
+import logging
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 from config import Config
 from langchain_anthropic import ChatAnthropic
+
+logger = logging.getLogger(__name__)
 
 app = Flask(__name__)
 CORS(app)
@@ -46,8 +49,14 @@ from catalog.loader import CatalogLoader
 db = psycopg2.connect(Config.DATABASE_URL)
 catalog = CatalogLoader(Config.CATALOG_PATH)
 
-from agent.agent import create_agent
-agent = create_agent(catalog, db)
+agent = None
+try:
+    from agent.agent import create_agent
+    agent = create_agent(catalog, db)
+    if agent is None:
+        logger.warning("create_agent() returned None — agent not yet implemented")
+except Exception as e:
+    logger.warning("Failed to initialize agent: %s", e)
 
 # ---------------------------------------------------------------------------
 # Routes
@@ -70,7 +79,6 @@ def chat():
     """
     # # TODO: Implement chat endpoint
     # pass
-  
 
 
 
@@ -130,24 +138,24 @@ def health():
 
     Response: { "status": "healthy", "database": "connected", "llm": "connected" }
     """
-    # # TODO: Implement health check
-    # pass
     status = ["", ""]
     # testing database
     try:
       db.cursor().execute("SELECT 1")
       status[0] = "connected"
     except Exception as e:
+      logger.warning("Database health check failed: %s", e)
       status[0] = "disconnected"
-    
+
     # testing llm
     try:
       llm = ChatAnthropic(model="claude-haiku-4-5-20251001", api_key=Config.LLM_API_KEY)
       llm.invoke("Say hello")
       status[1] = "connected"
     except Exception as e:
+      logger.warning("LLM health check failed: %s", e)
       status[1] = "disconnected"
-    
+
     overall = ""
     count = status.count("connected")
     if count == 2:
@@ -156,7 +164,7 @@ def health():
       overall = "degraded"
     else:
       overall = "down"
-    
+
     return jsonify( { "status": overall, "database": status[0], "llm": status[1] } )
 
 

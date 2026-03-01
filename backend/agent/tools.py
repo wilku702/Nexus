@@ -11,15 +11,26 @@ Typical flow:
   5. synthesize_answer → turn raw results into a natural language response
 """
 
+import logging
 from catalog.loader import CatalogLoader
 from auth.roles import UserRole, filter_pii_from_sql
 import sqlparse
+from sqlparse.sql import Identifier, IdentifierList
 from sqlparse import tokens as T
 from langchain_anthropic import ChatAnthropic
 from config import Config
 from agent.prompts import SQL_GENERATION_PROMPT, SYSTEM_PROMPT, ANSWER_SYNTHESIS_PROMPT
 
-llm = ChatAnthropic(model="claude-haiku-4-5-20251001", api_key=Config.LLM_API_KEY)
+logger = logging.getLogger(__name__)
+
+_llm = None
+
+def _get_llm():
+    """Lazy-initialize the LLM client."""
+    global _llm
+    if _llm is None:
+        _llm = ChatAnthropic(model="claude-haiku-4-5-20251001", api_key=Config.LLM_API_KEY)
+    return _llm
 
 # ---------------------------------------------------------------------------
 # Tool 1: get_schema_info
@@ -39,8 +50,6 @@ def get_schema_info(question: str, catalog: CatalogLoader) -> str:
     This is the foundation of "metadata-grounded" SQL generation.
     Without good context here, the LLM will hallucinate table/column names.
     """
-    # TODO: Return formatted schema context
-    # pass
     return catalog.get_context_for_question(question)
 
 
@@ -69,28 +78,26 @@ def generate_sql(question: str, schema_context: str, role: str) -> str:
       - LLM wraps SQL in markdown → strip the ``` markers
       - Column names need double-quoting for PostgreSQL (PascalCase)
     """
-    # TODO: Build prompt, call LLM, extract SQL
-    # pass
     prompt = SQL_GENERATION_PROMPT.format(
         schema_context=schema_context,
         question=question,
         role=role
     )
-    response = llm.invoke(prompt)
+    response = _get_llm().invoke(prompt)
     sql = response.content
-    
+
     sql = sql.strip()
     if sql.startswith("```"):
         sql = sql.split("\n", 1)[1]  # remove first line
     if sql.endswith("```"):
         sql = sql.rsplit("```", 1)[0]  # remove last line
     sql = sql.strip()
-    
+
     if 'CANNOT_ANSWER' in sql:
       sql = ''
-    
+
     return sql
-    
+
 
 
 # ---------------------------------------------------------------------------
@@ -118,37 +125,48 @@ def validate_sql(sql: str, role: str, catalog: CatalogLoader) -> dict:
     You can use the `sqlparse` library for parsing, or start with simple
     string matching (e.g., sql.strip().upper().startswith("SELECT")).
     """
-    # TODO: Implement SQL validation checks
-    # pass
     statements = sqlparse.parse(sql)
-    table_names = set([ val['table_name'] for val in catalog.get_all_tables() ])
+    table_names = set(val['table_name'] for val in catalog.get_all_tables())
     has_limit = False
 
-    # check if referenced table exist in the catalog
-    referenced_table = None
+    referenced_tables = []
     for statement in statements:
-      for i, token in enumerate(statement.tokens):
-        val = token.value.upper()
-        if token.ttype in (T.Keyword.DML, T.Keyword.DDL):
-          if val != 'SELECT':
-            return { "valid": False, "reason": "Not a select statement", "sql": sql }
-        if token.ttype is T.Keyword:
-          if val == 'FROM':
-            idx, next_token = statement.token_next(i, skip_ws=True)
-            if next_token.value not in table_names:
-                return { "valid": False, "reason": "Table doesn't exist", "sql": sql }
-            referenced_table = next_token.value
-          elif val == 'LIMIT':
-              has_limit = True
+        for i, token in enumerate(statement.tokens):
+            val = token.value.upper()
+            if token.ttype in (T.Keyword.DML, T.Keyword.DDL):
+                if val != 'SELECT':
+                    return {"valid": False, "reason": "Not a select statement", "sql": sql}
+            if token.ttype is T.Keyword:
+                if val in ('FROM', 'JOIN', 'INNER JOIN', 'LEFT JOIN',
+                           'RIGHT JOIN', 'FULL JOIN', 'CROSS JOIN'):
+                    idx, next_token = statement.token_next(i, skip_ws=True)
+                    if next_token is not None:
+                        # Handle aliases: extract just the base table name
+                        if isinstance(next_token, Identifier):
+                            tbl_name = next_token.get_name()
+                            # get_name() returns the alias if present; get_real_name() returns the table
+                            tbl_name = next_token.get_real_name()
+                        else:
+                            tbl_name = next_token.value.split()[0]
 
-    pii_columns = catalog.get_pii_columns(referenced_table) if referenced_table else []
+                        if tbl_name not in table_names:
+                            return {"valid": False, "reason": f"Table '{tbl_name}' doesn't exist", "sql": sql}
+                        referenced_tables.append(tbl_name)
+                elif val == 'LIMIT':
+                    has_limit = True
+
+    # Collect PII columns from all referenced tables
+    all_pii_columns = []
+    for tbl in referenced_tables:
+        all_pii_columns.extend(catalog.get_pii_columns(tbl))
+
     user_role = UserRole(role) if isinstance(role, str) else role
-    sql = filter_pii_from_sql( sql, pii_columns, user_role )
+    sql = filter_pii_from_sql(sql, all_pii_columns, user_role)
 
     if not has_limit:
-        sql += ' LIMIT 50'
+        sql += f' LIMIT {Config.MAX_QUERY_ROWS}'
 
-    return { "valid": True, "sql": sql }
+    return {"valid": True, "sql": sql}
 
 # ---------------------------------------------------------------------------
 # Tool 4: execute_sql
@@ -176,26 +194,24 @@ def execute_sql(sql: str, db_connection) -> dict:
       - Don't forget to handle the case where sql is empty or None
       - Connection pooling: reuse the connection, don't reconnect per query
     """
-    # TODO: Execute query and return results
-    # pass
     cursor = None
     try:
         if not sql:
             raise Exception('SQL command is empty')
 
         cursor = db_connection.cursor()
-        cursor.execute("SET statement_timeout = '10s'")
+        cursor.execute(f"SET statement_timeout = '{Config.QUERY_TIMEOUT_SECONDS}s'")
         cursor.execute(sql)
 
         columns = [desc[0] for desc in cursor.description]
         rows = [dict(zip(columns, row)) for row in cursor.fetchall()]
 
-        return { "rows": rows, "row_count": len(rows), "columns": columns }
+        return {"rows": rows, "row_count": len(rows), "columns": columns}
 
     except Exception as e:
-        print(f'Error executing script')
+        logger.error("Error executing SQL query: %s", e)
         db_connection.rollback()
-        return { "rows": [], "row_count": 0, "error": str(e) }
+        return {"rows": [], "row_count": 0, "error": f"Error executing SQL query: {str(e)}"}
     finally:
         if cursor:
             cursor.close()
@@ -224,15 +240,11 @@ def synthesize_answer(question: str, sql: str, results: dict) -> str:
       - Say "no results found" if the query returned 0 rows
       - NOT just dump the raw data — summarize it
     """
-    # TODO: Build prompt, call LLM, return natural language answer
-    # pass
-    
     prompt = ANSWER_SYNTHESIS_PROMPT.format(
       question=question,
       sql=sql,
       results=results,
     )
-    
-    response = llm.invoke(prompt)
-    return response.content 
-    
+
+    response = _get_llm().invoke(prompt)
+    return response.content

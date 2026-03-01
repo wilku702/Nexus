@@ -24,8 +24,6 @@
 #   - Files in /docker-entrypoint-initdb.d/ run automatically on first start
 #   - Download Chinook SQL from: https://github.com/lerocha/chinook-database
 
-version: "3.9"
-
 services:
   db:
     image: postgres:15

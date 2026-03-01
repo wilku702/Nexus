@@ -29,7 +29,8 @@ class CatalogLoader:
         # TODO: Load and parse the YAML file
         # pass
         try:
-          content = open(catalog_path).read()
+            with open(catalog_path) as f:
+                content = f.read()
         except FileNotFoundError:
             raise FileNotFoundError(f"Catalog not found: {catalog_path}")
 

@@ -8,10 +8,15 @@ The key function is filter_pii_from_sql() which modifies SQL to mask PII
 columns when an analyst makes a query.
 """
 
+import re
+import logging
 from enum import Enum
 import sqlparse
 from sqlparse.sql import IdentifierList, Identifier
 from sqlparse import tokens as T
+
+logger = logging.getLogger(__name__)
+
 
 class UserRole(Enum):
     """User roles for access control."""
@@ -39,8 +44,13 @@ def get_role_permissions(role: UserRole) -> dict:
     Returns:
         Dict of permission flags
     """
-    # TODO: Return permissions based on role
-    pass
+    if role == UserRole.ANALYST:
+        return {"can_view_pii": False, "can_view_sensitive": True, "max_rows": 50}
+    elif role == UserRole.ADMIN:
+        return {"can_view_pii": True, "can_view_sensitive": True, "max_rows": 1000}
+    else:
+        logger.warning("Unknown role %s, defaulting to analyst permissions", role)
+        return {"can_view_pii": False, "can_view_sensitive": True, "max_rows": 50}
 
 
 def filter_pii_from_sql(sql: str, pii_columns: list[str], role: UserRole) -> str:
@@ -78,31 +88,29 @@ def filter_pii_from_sql(sql: str, pii_columns: list[str], role: UserRole) -> str
     Returns:
         The SQL string, possibly modified to mask PII
     """
-    # TODO: Implement PII masking for analyst role
-    # pass
-    
     if role == UserRole.ADMIN:
-      return sql
+        return sql
     elif role == UserRole.ANALYST:
-      modified_sql = sql[:]
-      statements = sqlparse.parse(sql)
+        modified_sql = sql[:]
+        statements = sqlparse.parse(sql)
 
-      # check if referenced table exist in the catalog
-      for statement in statements:
-        for i, token in enumerate(statement.tokens):
-          val = token.value.upper()
-          if token.ttype is T.Keyword:
-            if val == 'FROM':
-              break
-          if isinstance(token, IdentifierList):
-            for identifier in token.get_identifiers():
-              name = identifier.get_name()
-              if name in pii_columns:
-                  modified_sql = modified_sql.replace(name, f"'***' AS {name}", 1)
-          elif isinstance(token, Identifier):
-              name = token.get_name()
-              if name in pii_columns:
-                  modified_sql = modified_sql.replace(name, f"'***' AS {name}", 1)
-                
-      
-      return modified_sql
+        for statement in statements:
+            for i, token in enumerate(statement.tokens):
+                val = token.value.upper()
+                if token.ttype is T.Keyword:
+                    if val == 'FROM':
+                        break
+                if isinstance(token, IdentifierList):
+                    for identifier in token.get_identifiers():
+                        name = identifier.get_name()
+                        if name in pii_columns:
+                            # Use word-boundary matching to avoid substring false matches
+                            pattern = r'\b' + re.escape(name) + r'\b'
+                            modified_sql = re.sub(pattern, f"'***' AS {name}", modified_sql, count=1)
+                elif isinstance(token, Identifier):
+                    name = token.get_name()
+                    if name in pii_columns:
+                        pattern = r'\b' + re.escape(name) + r'\b'
+                        modified_sql = re.sub(pattern, f"'***' AS {name}", modified_sql, count=1)
+
+        return modified_sql
