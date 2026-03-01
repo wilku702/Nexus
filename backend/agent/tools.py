@@ -29,7 +29,7 @@ def _get_llm():
     """Lazy-initialize the LLM client."""
     global _llm
     if _llm is None:
-        _llm = ChatAnthropic(model="claude-haiku-4-5-20251001", api_key=Config.LLM_API_KEY)
+        _llm = ChatAnthropic(model=Config.LLM_MODEL, api_key=Config.LLM_API_KEY)
     return _llm
 
 # ---------------------------------------------------------------------------

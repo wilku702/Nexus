@@ -8,11 +8,11 @@
 
 Every section is tagged with one of three labels:
 
-| Tag | Meaning |
-|-----|---------|
+| Tag               | Meaning                                                                                                                                |
+| ----------------- | -------------------------------------------------------------------------------------------------------------------------------------- |
 | **`[YOU BUILD]`** | You implement this yourself from scratch. Skeleton file structures, guidance, and checklists are provided, but you write all the code. |
-| **`[PROVIDED]`** | The React frontend is pre-built for you. You only need to wire up the API calls where `TODO [WIRE-UP]` comments appear. |
-| **`[OPTIONAL]`** | Stretch goals. Mention these in interviews even if unfinished. |
+| **`[PROVIDED]`**  | The React frontend is pre-built for you. You only need to wire up the API calls where `TODO [WIRE-UP]` comments appear.                |
+| **`[OPTIONAL]`**  | Stretch goals. Mention these in interviews even if unfinished.                                                                         |
 
 **The rule:** Everything on the backend is yours. The frontend is provided so you can focus on the AI/agent/data engineering work — the stuff that actually matters for the role.
 
@@ -210,17 +210,17 @@ Same shape as `POST /api/evaluate` response — returns the most recent eval run
 
 ## Tech Stack Summary
 
-| Layer | Technology | Notes |
-|-------|-----------|-------|
-| LLM | OpenAI GPT-4o or Claude | Via LangChain. You choose. |
-| Agent Framework | LangChain | Agents, tools, prompts, callbacks |
-| Backend | Flask + Python 3.11+ | Flask-CORS for dev |
-| Database | PostgreSQL 15+ | Docker recommended |
-| Dataset | Chinook | 11 tables, music store data |
-| Metadata Store | YAML file (start) → PostgreSQL table (later) | Your call |
-| Evaluation | Custom Python scripts | Optionally add LangFuse/LangSmith |
-| Frontend | React + Vite + TypeScript + Tailwind | Pre-built for you |
-| Containerization | Docker + docker-compose | For PostgreSQL at minimum |
+| Layer            | Technology                                   | Notes                             |
+| ---------------- | -------------------------------------------- | --------------------------------- |
+| LLM              | OpenAI GPT-4o or Claude                      | Via LangChain. You choose.        |
+| Agent Framework  | LangChain                                    | Agents, tools, prompts, callbacks |
+| Backend          | Flask + Python 3.11+                         | Flask-CORS for dev                |
+| Database         | PostgreSQL 15+                               | Docker recommended                |
+| Dataset          | Chinook                                      | 11 tables, music store data       |
+| Metadata Store   | YAML file (start) → PostgreSQL table (later) | Your call                         |
+| Evaluation       | Custom Python scripts                        | Optionally add LangFuse/LangSmith |
+| Frontend         | React + Vite + TypeScript + Tailwind         | Pre-built for you                 |
+| Containerization | Docker + docker-compose                      | For PostgreSQL at minimum         |
 
 ---
 
@@ -250,6 +250,7 @@ Same shape as `POST /api/evaluate` response — returns the most recent eval run
 You'll create a `docker-compose.yml` that runs PostgreSQL and optionally auto-seeds the Chinook data on first startup. The Chinook SQL script is available publicly — download it and mount it as an init script.
 
 **Things to figure out yourself:**
+
 - How to configure `docker-compose.yml` for a PostgreSQL service
 - How to mount an init SQL script so the database seeds automatically
 - How to set environment variables for the database credentials
@@ -265,12 +266,14 @@ backend/
 ```
 
 **`docker-compose.yml`** — You write this. It should:
+
 - Use the `postgres:15` image
 - Expose port 5432
 - Set `POSTGRES_DB`, `POSTGRES_USER`, `POSTGRES_PASSWORD`
 - Mount the Chinook SQL file to `/docker-entrypoint-initdb.d/`
 
 **`scripts/seed_db.py`** — You write this. It should:
+
 - Connect to PostgreSQL using `psycopg2`
 - Verify the Chinook tables exist (list all tables)
 - Print table names and row counts as a sanity check
@@ -278,19 +281,19 @@ backend/
 
 ### Chinook database tables you'll be working with
 
-| Table | Rows (approx) | Description |
-|-------|---------------|-------------|
-| Album | 347 | Music albums, linked to Artist |
-| Artist | 275 | Musical artists/bands |
-| Customer | 59 | Customer accounts with contact info (has PII) |
-| Employee | 8 | Company employees with reporting structure (has PII) |
-| Genre | 25 | Music genres |
-| Invoice | 412 | Customer purchase invoices |
-| InvoiceLine | 2240 | Line items on each invoice |
-| MediaType | 5 | Audio format types |
-| Playlist | 18 | Named playlists |
-| PlaylistTrack | 8715 | Track-to-playlist mapping |
-| Track | 3503 | Individual songs with pricing |
+| Table         | Rows (approx) | Description                                          |
+| ------------- | ------------- | ---------------------------------------------------- |
+| Album         | 347           | Music albums, linked to Artist                       |
+| Artist        | 275           | Musical artists/bands                                |
+| Customer      | 59            | Customer accounts with contact info (has PII)        |
+| Employee      | 8             | Company employees with reporting structure (has PII) |
+| Genre         | 25            | Music genres                                         |
+| Invoice       | 412           | Customer purchase invoices                           |
+| InvoiceLine   | 2240          | Line items on each invoice                           |
+| MediaType     | 5             | Audio format types                                   |
+| Playlist      | 18            | Named playlists                                      |
+| PlaylistTrack | 8715          | Track-to-playlist mapping                            |
+| Track         | 3503          | Individual songs with pricing                        |
 
 ---
 
@@ -309,6 +312,7 @@ backend/
 The metadata catalog is a YAML/JSON file that stores human-written descriptions of what each table and column contains. The AI agent will read this metadata before generating SQL so it knows which tables to use and what the columns mean.
 
 **Your catalog should answer these questions for every column:**
+
 1. What does this column contain in plain English?
 2. What data type is it?
 3. Is it personally identifiable information (PII)?
@@ -316,11 +320,13 @@ The metadata catalog is a YAML/JSON file that stores human-written descriptions 
 5. What are some example values?
 
 **Governance levels to use:**
+
 - `public` — Safe for anyone to see (genre names, track titles, etc.)
 - `pii` — Personally identifiable information (emails, phone numbers, addresses)
 - `sensitive` — Business-sensitive but not personal (revenue figures, employee salaries)
 
 **PII columns in Chinook to tag:**
+
 - `Customer.Email`, `Customer.Phone`, `Customer.Address`, `Customer.City`, `Customer.State`, `Customer.PostalCode`, `Customer.Fax`
 - `Employee.Email`, `Employee.Phone`, `Employee.Address`, `Employee.City`, `Employee.State`, `Employee.PostalCode`, `Employee.Fax`, `Employee.BirthDate`
 
@@ -338,27 +344,27 @@ backend/
 
 ```yaml
 tables:
-  - table_name: "Customer"
-    description: "Stores customer account information including contact details and location"
-    owner: "sales_team"
-    governance_level: "internal"
+  - table_name: 'Customer'
+    description: 'Stores customer account information including contact details and location'
+    owner: 'sales_team'
+    governance_level: 'internal'
     columns:
-      - column_name: "CustomerId"
-        data_type: "integer"
-        description: "Primary key, unique customer identifier"
+      - column_name: 'CustomerId'
+        data_type: 'integer'
+        description: 'Primary key, unique customer identifier'
         is_pii: false
-        sample_values: ["1", "2", "3"]
-        governance_tag: "public"
-      - column_name: "Email"
-        data_type: "varchar(60)"
-        description: "Customer email address"
+        sample_values: ['1', '2', '3']
+        governance_tag: 'public'
+      - column_name: 'Email'
+        data_type: 'varchar(60)'
+        description: 'Customer email address'
         is_pii: true
-        sample_values: ["luisg@embraer.com.br"]
-        governance_tag: "pii"
+        sample_values: ['luisg@embraer.com.br']
+        governance_tag: 'pii'
       # ... you do the remaining columns for Customer
       # ... then do all 10 other tables
 
-  - table_name: "Album"
+  - table_name: 'Album'
     # ... you fill this in
 ```
 
@@ -443,11 +449,13 @@ backend/
 **Output:** A formatted string containing table names, descriptions, column names, data types, and sample values for the tables most likely relevant to the question.
 
 **Implementation approach:**
+
 - **Simple (start here):** Return metadata for ALL tables. The LLM is smart enough to figure out which ones matter. This works fine for Chinook's 11 tables.
 - **Better (do later):** Keyword match the question against table/column descriptions. If the user says "customers," prioritize the Customer table.
 - **Best (stretch goal):** Embed table descriptions into vectors, do similarity search against the question embedding.
 
 **Things to think about:**
+
 - How do you format the metadata so the LLM can easily parse it?
 - Should you include sample values? (Yes — they help the LLM understand what values to filter on)
 - How do you handle ambiguous questions that could involve multiple tables?
@@ -460,6 +468,7 @@ backend/
 **Output:** A SQL query string
 
 **This is really a prompt engineering problem.** Your prompt template should:
+
 1. Include the full schema context from `get_schema_info`
 2. Instruct the LLM to only use tables/columns present in the provided metadata
 3. Tell the LLM to add a `LIMIT` clause (e.g., `LIMIT 50`)
@@ -467,6 +476,7 @@ backend/
 5. Tell the LLM to use PostgreSQL syntax specifically
 
 **Things to think about:**
+
 - How do you handle questions the database can't answer? (The LLM should say "I can't answer that" rather than hallucinating SQL)
 - How do you handle column name case sensitivity in PostgreSQL? (Chinook uses PascalCase column names, which need double-quoting in PostgreSQL)
 - What if the LLM wraps the SQL in markdown code blocks? (Strip them)
@@ -479,6 +489,7 @@ backend/
 **Output:** `{ "valid": true/false, "reason": "..." }`
 
 **Checks to implement:**
+
 1. Parse the SQL and verify it's a `SELECT` statement (block `DROP`, `DELETE`, `UPDATE`, `INSERT`, `ALTER`, `TRUNCATE`)
 2. Verify all referenced tables exist in your catalog
 3. Verify a `LIMIT` clause is present (inject one if missing)
@@ -486,6 +497,7 @@ backend/
 5. Check for obviously dangerous patterns (e.g., `SELECT *` from restricted tables)
 
 **Things to think about:**
+
 - You can use Python's `sqlparse` library for SQL parsing, or do simple string matching to start
 - What do you do when validation fails? Return an error message the LLM can work with?
 - How do you handle subqueries or CTEs that might reference PII columns?
@@ -498,6 +510,7 @@ backend/
 **Output:** Query results as a list of dicts + row count
 
 **Requirements:**
+
 - Use `psycopg2` to connect and execute
 - Set a query timeout (e.g., 10 seconds) to prevent runaway queries
 - Enforce the row limit from `validate_sql`
@@ -505,6 +518,7 @@ backend/
 - Handle and report database errors gracefully
 
 **Things to think about:**
+
 - Connection pooling — create one connection at app startup, don't reconnect per query
 - What do you return if the query returns 0 rows?
 - How do you handle very wide result sets (many columns)?
@@ -517,6 +531,7 @@ backend/
 **Output:** A natural language answer that cites the source tables/columns
 
 **This is another prompt engineering task.** Your prompt should:
+
 1. Include the original question for context
 2. Include the SQL that was executed (so the answer references it)
 3. Include the raw results
@@ -541,7 +556,7 @@ backend/
 **`agent.py`** — You write this. The key function:
 
 ```python
-def create_agent(catalog: CatalogLoader, db_connection):
+def create_langchain_agent(catalog: CatalogLoader, db_connection):
     """Create and return the LangChain agent with all tools.
 
     TODO: You implement this. Steps:
@@ -597,14 +612,14 @@ TODO: Write the prompt template for answer synthesis. It should:
 
 ### LangChain components you'll use
 
-| Component | From | Purpose |
-|-----------|------|---------|
-| `ChatOpenAI` or `ChatAnthropic` | `langchain_openai` or `langchain_anthropic` | The LLM that powers the agent |
-| `Tool` | `langchain_core.tools` | Wraps your Python functions as agent tools |
-| `create_react_agent` | `langchain.agents` | Creates a ReAct agent that reasons step-by-step |
-| `AgentExecutor` | `langchain.agents` | Runs the agent loop (think → act → observe → repeat) |
-| `PromptTemplate` | `langchain_core.prompts` | Template for your system prompt |
-| `CallbackHandler` (optional) | `langchain_core.callbacks` | For logging/tracing agent steps |
+| Component                       | From                                        | Purpose                                              |
+| ------------------------------- | ------------------------------------------- | ---------------------------------------------------- |
+| `ChatOpenAI` or `ChatAnthropic` | `langchain_openai` or `langchain_anthropic` | The LLM that powers the agent                        |
+| `Tool`                          | `langchain_core.tools`                      | Wraps your Python functions as agent tools           |
+| `create_react_agent`            | `langchain.agents`                          | Creates a ReAct agent that reasons step-by-step      |
+| `AgentExecutor`                 | `langchain.agents`                          | Runs the agent loop (think → act → observe → repeat) |
+| `PromptTemplate`                | `langchain_core.prompts`                    | Template for your system prompt                      |
+| `CallbackHandler` (optional)    | `langchain_core.callbacks`                  | For logging/tracing agent steps                      |
 
 ---
 
@@ -849,12 +864,12 @@ def filter_pii_from_sql(sql: str, pii_columns: list[str], role: UserRole) -> str
 
 **PII masking strategies (pick one or combine):**
 
-| Strategy | Pros | Cons |
-|----------|------|------|
+| Strategy                       | Pros                        | Cons                               |
+| ------------------------------ | --------------------------- | ---------------------------------- |
 | Replace in SELECT with `'***'` | Simple, preserves row count | Doesn't prevent WHERE clause leaks |
-| Remove PII columns from SELECT | Clean output | Changes result shape |
-| Reject query entirely | Safest | Poor UX, too restrictive |
-| Hash PII values | Allows grouping/counting | Still reveals patterns |
+| Remove PII columns from SELECT | Clean output                | Changes result shape               |
+| Reject query entirely          | Safest                      | Poor UX, too restrictive           |
+| Hash PII values                | Allows grouping/counting    | Still reveals patterns             |
 
 **Recommendation:** Start with "Replace in SELECT with `'***'`" — it's the simplest and most visually clear for demo purposes. You can explain the tradeoffs in an interview.
 
@@ -992,6 +1007,7 @@ backend/
 ```
 
 **Test case difficulty guidelines:**
+
 - **Easy** — Single table, simple aggregation or filter. E.g., "How many genres are there?"
 - **Medium** — 2-table join, GROUP BY, or ORDER BY. E.g., "What genre has the most tracks?"
 - **Hard** — 3+ table join, subquery, date filtering, or complex aggregation. E.g., "Total revenue by country for 2013"
@@ -1094,6 +1110,7 @@ def load_test_cases(path: str) -> list[dict]:
 ```
 
 **Pass/fail thresholds (suggested, you decide):**
+
 - SQL must execute without errors (correctness = True)
 - SQL accuracy >= 0.8 (at least 80% of expected keywords present)
 - Answer accuracy >= 0.5 (at least 50% of expected values present)
@@ -1109,6 +1126,7 @@ def load_test_cases(path: str) -> list[dict]:
 **Goal:** Connect the pre-built React frontend to your backend API.
 
 The React frontend is built for you with Vite + TypeScript + Tailwind CSS. It includes:
+
 - Chat interface with message history and SQL display panel
 - Catalog browser with table/column metadata and governance tags
 - Evaluation dashboard with charts and metrics tables
@@ -1129,6 +1147,7 @@ grep -r "WIRE-UP" frontend/src/
 ```
 
 Each `TODO [WIRE-UP]` comment tells you:
+
 1. Which endpoint to call
 2. The HTTP method
 3. The request body shape
@@ -1151,22 +1170,24 @@ Each `TODO [WIRE-UP]` comment tells you:
 ### Example: How to replace a mock
 
 **Before (mock):**
+
 ```typescript
 // TODO [WIRE-UP]: Replace mock data with actual API call
 // Endpoint: POST /api/chat
 // Request:  { question: string, role: 'analyst' | 'admin' }
 // Response: { answer: string, sql: string, tables_used: string[], latency_ms: number }
-await new Promise(resolve => setTimeout(resolve, 800));
+await new Promise((resolve) => setTimeout(resolve, 800));
 const mockResponse = MOCK_CHAT_RESPONSES[0];
 set({ messages: [...get().messages, mockResponse] });
 ```
 
 **After (real):**
+
 ```typescript
 const response = await fetch('/api/chat', {
   method: 'POST',
   headers: { 'Content-Type': 'application/json' },
-  body: JSON.stringify({ question, role: get().currentRole }),
+  body: JSON.stringify({ question, role: get().currentRole })
 });
 const data = await response.json();
 set({ messages: [...get().messages, data] });
@@ -1281,6 +1302,7 @@ backend/
 # Master Progress Tracker
 
 ## Phase 1: Database & Catalog `[YOU BUILD]`
+
 - [ ] PostgreSQL running (Docker or local)
 - [ ] Chinook dataset loaded
 - [ ] `seed_db.py` verifies connection and table row counts
@@ -1289,6 +1311,7 @@ backend/
 - [ ] `get_context_for_question()` returns formatted metadata string
 
 ## Phase 2: LangChain Agent `[YOU BUILD]`
+
 - [ ] `get_schema_info` tool implemented
 - [ ] `generate_sql` tool implemented with prompt template
 - [ ] `validate_sql` tool implemented with safety checks
@@ -1298,6 +1321,7 @@ backend/
 - [ ] Tested with 5+ different questions manually
 
 ## Phase 3: Flask API `[YOU BUILD]`
+
 - [ ] `POST /api/chat` works end-to-end
 - [ ] `GET /api/catalog/tables` returns all table metadata
 - [ ] `GET /api/catalog/tables/<name>` returns column-level detail
@@ -1305,6 +1329,7 @@ backend/
 - [ ] All endpoints tested with `curl`
 
 ## Phase 4: Governance `[YOU BUILD]`
+
 - [ ] `analyst` role cannot see raw PII in query results
 - [ ] `admin` role has full access
 - [ ] `query_log` table created in PostgreSQL
@@ -1312,6 +1337,7 @@ backend/
 - [ ] `GET /api/audit` returns recent logs
 
 ## Phase 5: Evaluation `[YOU BUILD]`
+
 - [ ] 15-20 test cases written across easy/medium/hard
 - [ ] All 5 scoring metrics implemented
 - [ ] `evaluate.py` runs full suite and produces summary
@@ -1319,6 +1345,7 @@ backend/
 - [ ] `GET /api/evaluate/results` returns latest run
 
 ## Phase 6: Frontend Integration `[PROVIDED → YOU WIRE UP]`
+
 - [ ] Frontend running with mock data (`npm run dev`)
 - [ ] Replaced all `TODO [WIRE-UP]` comments with real `fetch()` calls
 - [ ] Chat works end-to-end through the UI
@@ -1329,6 +1356,7 @@ backend/
 - [ ] Audit log shows real query history
 
 ## Phase 7: Stretch Goals `[OPTIONAL]`
+
 - [ ] Multi-turn conversations
 - [ ] Query suggestions
 - [ ] Vector-based metadata RAG

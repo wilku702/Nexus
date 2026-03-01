@@ -71,11 +71,13 @@ Use a publicly available dataset loaded into PostgreSQL. Good options:
 **Goal:** User types a question, agent generates SQL, runs it, returns an answer.
 
 #### 1.1 Database Setup
+
 - Install PostgreSQL locally (or use Docker: `docker run --name nexus-db -e POSTGRES_PASSWORD=password -p 5432:5432 -d postgres`)
 - Load your chosen dataset
 - Verify you can connect and run queries via `psycopg2`
 
 #### 1.2 Metadata Catalog Layer
+
 This is the piece that makes your project feel like Alation. Create a `catalog` table or a JSON/YAML file that stores metadata about your database:
 
 ```
@@ -120,6 +122,7 @@ This is the main thing to implement yourself. Use LangChain's agent framework wi
 5. **`synthesize_answer`** - Takes raw query results + original question and generates a natural language answer that cites which tables/columns were used.
 
 **LangChain components to use:**
+
 - `ChatOpenAI` or `ChatAnthropic` as the LLM
 - `create_react_agent` or `AgentExecutor` to orchestrate tool calls
 - `Tool` class to wrap each function above
@@ -127,6 +130,7 @@ This is the main thing to implement yourself. Use LangChain's agent framework wi
 - `SQLDatabase` from langchain_community (optional, LangChain has a built-in SQL toolkit you can reference, but building your own tools teaches you more)
 
 **Skeleton flow in pseudocode:**
+
 ```
 def handle_chat(user_question, user_role):
     # 1. Retrieve metadata context
@@ -136,7 +140,7 @@ def handle_chat(user_question, user_role):
     prompt = build_prompt(user_question, metadata, user_role)
 
     # 3. Agent decides which tools to call
-    agent = create_agent(llm, tools=[generate_sql, validate_sql, execute_sql, synthesize_answer])
+    agent = create_langchain_agent(llm, tools=[generate_sql, validate_sql, execute_sql, synthesize_answer])
     response = agent.invoke({"input": prompt})
 
     # 4. Log everything for evaluation
@@ -163,18 +167,23 @@ Use Flask-CORS so the React frontend can hit it.
 **Goal:** Different user roles see different data. PII is protected.
 
 #### 2.1 Role-Based Filtering
+
 Define two roles:
+
 - **analyst**: Can query all public and internal data. PII columns (emails, phone numbers, addresses) are masked or excluded from results.
 - **admin**: Full access to everything.
 
 Implement this in your `validate_sql` tool: before executing, check if the query selects any PII-tagged columns and the user role is "analyst". If so, either:
+
 - Replace PII columns with a masked version (e.g., `'***' AS email`)
 - Reject the query and tell the user they lack access
 
 **Why this matters:** The JD lists "understanding of enterprise data governance and access control principles" as a desired qualification. This is a simple but effective demo.
 
 #### 2.2 Query Audit Trail
+
 Log every query to a `query_log` table:
+
 ```
 - id
 - timestamp
@@ -198,7 +207,9 @@ Add a `GET /api/audit` endpoint that returns recent logs. This shows you think a
 This is directly called out in the JD: "evaluate, benchmark, and refine performance."
 
 #### 3.1 Test Suite
+
 Create a JSON file of test cases:
+
 ```json
 [
   {
@@ -225,7 +236,9 @@ Create a JSON file of test cases:
 Write 15-20 test cases across easy/medium/hard.
 
 #### 3.2 Evaluation Metrics
+
 For each test case, score:
+
 - **SQL Correctness**: Does the generated SQL execute without errors? (binary)
 - **SQL Accuracy**: Does it contain the expected tables/columns/keywords? (precision score)
 - **Answer Accuracy**: Does the final answer contain the expected values? (recall score)
@@ -233,7 +246,9 @@ For each test case, score:
 - **Governance Compliance**: If test case involves PII, was it properly filtered?
 
 #### 3.3 Evaluation Runner
+
 Build a script (`evaluate.py`) that:
+
 1. Loads test cases
 2. Runs each through your agent
 3. Scores each metric
@@ -242,6 +257,7 @@ Build a script (`evaluate.py`) that:
 Optionally integrate LangFuse or LangSmith for tracing. You already have LangFuse experience from KdanMobile, so you can mention this at the interview as something you'd add for production observability.
 
 #### 3.4 Evaluation API
+
 - `POST /api/evaluate` - Triggers the full eval suite, returns results
 - `GET /api/evaluate/results` - Returns the latest eval run
 
@@ -266,6 +282,7 @@ These are things you can mention at the interview as "next steps" even if you do
 ## Frontend (I Will Build This for You)
 
 A React app with:
+
 - Chat interface (message history, streaming responses)
 - SQL display panel (shows generated query, highlighted)
 - Catalog browser sidebar (tables, columns, governance tags)
@@ -278,16 +295,16 @@ Just let me know when you want the frontend and I will build it out.
 
 ## Tech Stack Summary
 
-| Layer | Technology |
-|---|---|
-| LLM | OpenAI GPT-4o or Claude via LangChain |
-| Agent Framework | LangChain (agents, tools, prompts) |
-| Backend | Flask, Python |
-| Database | PostgreSQL |
-| Metadata Store | PostgreSQL table or YAML |
-| Evaluation | Custom Python + optionally LangFuse |
-| Frontend | React (provided for you) |
-| Containerization | Docker + docker-compose |
+| Layer            | Technology                            |
+| ---------------- | ------------------------------------- |
+| LLM              | OpenAI GPT-4o or Claude via LangChain |
+| Agent Framework  | LangChain (agents, tools, prompts)    |
+| Backend          | Flask, Python                         |
+| Database         | PostgreSQL                            |
+| Metadata Store   | PostgreSQL table or YAML              |
+| Evaluation       | Custom Python + optionally LangFuse   |
+| Frontend         | React (provided for you)              |
+| Containerization | Docker + docker-compose               |
 
 ---
 

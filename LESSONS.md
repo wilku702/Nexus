@@ -36,7 +36,7 @@ Estimated total time: 12-20 hours depending on your Python/SQL experience.
    - Save it somewhere inside `backend/scripts/`
 3. Open `backend/docker-compose.yml` and fill in the TODOs:
    - The `image` field needs an image name and tag
-   - The `environment` block sets variables *inside* the container — PostgreSQL reads specific ones on startup
+   - The `environment` block sets variables _inside_ the container — PostgreSQL reads specific ones on startup
    - The `ports` block maps `host:container` — PostgreSQL listens on a well-known port
    - The `volumes` block does two things: mounts your SQL file for auto-seeding, and creates persistent storage
 4. The `volumes` key at the bottom (top-level, outside `services`) declares named volumes
@@ -48,27 +48,32 @@ Estimated total time: 12-20 hours depending on your Python/SQL experience.
 <summary>What image tag should I use?</summary>
 
 `postgres:15` — the number is the major version. You specified this in the requirements.
+
 </details>
 
 <details>
 <summary>What environment variables does the postgres image expect?</summary>
 
 The official image docs list them: `POSTGRES_DB`, `POSTGRES_USER`, `POSTGRES_PASSWORD`. These create the database and user on first startup. Make them match your `.env` file values (`nexus` / `nexus` / `nexus` is fine for local dev).
+
 </details>
 
 <details>
 <summary>How does the init script auto-run?</summary>
 
 PostgreSQL's Docker image runs any `.sql` or `.sh` files in `/docker-entrypoint-initdb.d/` on first startup (only when the data directory is empty). Mount your Chinook SQL file there.
+
 </details>
 
 <details>
 <summary>My database won't re-seed when I change the SQL file</summary>
 
 Init scripts only run on a fresh data volume. Run `docker compose down -v` to delete the volume, then `docker compose up -d` to start fresh.
+
 </details>
 
 **Checkpoint:**
+
 ```bash
 # Connect to the running database
 docker compose exec db psql -U nexus -d nexus -c "SELECT COUNT(*) FROM \"Customer\";"
@@ -117,21 +122,25 @@ cursor = conn.cursor()
 cursor.execute("SELECT 1")
 print(cursor.fetchone())
 ```
+
 </details>
 
 <details>
 <summary>How do I get row counts for each table?</summary>
 
 You can't use a parameter for table names in SQL. Build the query string with f-strings, but use double quotes around the table name since Chinook uses PascalCase: `f'SELECT COUNT(*) FROM "{table_name}"'`
+
 </details>
 
 <details>
 <summary>I get "connection refused"</summary>
 
 Make sure Docker is running and `docker compose up -d` was successful. Check that the port in your `.env` matches the port in `docker-compose.yml`.
+
 </details>
 
 **Checkpoint:**
+
 ```
 $ python scripts/seed_db.py
 Album: 347 rows
@@ -188,18 +197,21 @@ Found 12 tables, all OK
 <summary>Which tables have PII?</summary>
 
 Only `Customer` and `Employee`. Their contact info columns (Email, Phone, Address, City, State, PostalCode, Fax) are PII. Employee also has BirthDate as PII.
+
 </details>
 
 <details>
 <summary>Which columns are "sensitive" vs "public"?</summary>
 
 Revenue/price columns are `sensitive`: `Invoice.Total`, `InvoiceLine.UnitPrice`, `Track.UnitPrice`. Everything else that isn't PII is `public`.
+
 </details>
 
 <details>
 <summary>Do I need all 11 tables?</summary>
 
-Yes — the agent will generate bad SQL if it doesn't know about a table. Missing tables mean missing JOINs and wrong answers. This is tedious but it's the *most important* part of the project: metadata quality directly determines agent accuracy.
+Yes — the agent will generate bad SQL if it doesn't know about a table. Missing tables mean missing JOINs and wrong answers. This is tedious but it's the _most important_ part of the project: metadata quality directly determines agent accuracy.
+
 </details>
 
 ### Part B: Implement CatalogLoader
@@ -232,9 +244,11 @@ Columns:
 Table: Album
 ...
 ```
+
 </details>
 
 **Checkpoint:**
+
 ```bash
 python -c "
 from catalog.loader import CatalogLoader
@@ -283,15 +297,18 @@ print(f'Customer PII cols: {c.get_pii_columns(\"Customer\")}')
 <summary>Flask keeps crashing on import errors</summary>
 
 Make sure you're running from the `backend/` directory so Python can find your modules. Or use: `PYTHONPATH=. python app.py`
+
 </details>
 
 <details>
 <summary>CORS errors in the browser</summary>
 
 `flask-cors` handles this. Make sure `CORS(app)` is called right after `Flask(__name__)`. For the Vite dev proxy to work, check `frontend/vite.config.ts` has a proxy entry mapping `/api` to `http://localhost:5000`.
+
 </details>
 
 **Checkpoint:**
+
 ```bash
 # API returns data
 curl -s http://localhost:5000/api/catalog/tables | python -m json.tool | head -20
@@ -333,22 +350,26 @@ curl -s http://localhost:5000/api/catalog/tables | python -m json.tool | head -2
 <summary>How long should the system prompt be?</summary>
 
 200-500 words is a good range. Too short and the LLM makes assumptions. Too long and it ignores parts. Be specific about rules, vague about personality.
+
 </details>
 
 <details>
 <summary>Should I include examples in the SQL prompt?</summary>
 
 Yes — 1-2 examples of question/SQL pairs dramatically improve accuracy. This is called "few-shot prompting." Example:
+
 ```
 Question: How many customers are in Brazil?
 SQL: SELECT COUNT(*) FROM "Customer" WHERE "Country" = 'Brazil';
 ```
+
 </details>
 
 <details>
 <summary>My LLM generates SQL without double quotes</summary>
 
 Add explicit instructions: "Chinook uses PascalCase table and column names. In PostgreSQL, you MUST double-quote them: SELECT \"Name\" FROM \"Artist\", not SELECT Name FROM Artist."
+
 </details>
 
 **Checkpoint:** No code to run yet — you'll test these prompts in the next lesson. But read each prompt aloud. Does it clearly tell the LLM what to do? Could you follow these instructions yourself?
@@ -399,19 +420,21 @@ llm = ChatOpenAI(model="gpt-4o", api_key=Config.LLM_API_KEY)
 response = llm.invoke("Your prompt here")
 answer = response.content  # string
 ```
+
 </details>
 
 <details>
 <summary>How do I strip markdown code blocks from SQL?</summary>
 
-```python
+````python
 sql = sql.strip()
 if sql.startswith("```"):
     sql = sql.split("\n", 1)[1]  # remove first line
 if sql.endswith("```"):
     sql = sql.rsplit("```", 1)[0]  # remove last line
 sql = sql.strip()
-```
+````
+
 </details>
 
 <details>
@@ -421,9 +444,11 @@ sql = sql.strip()
 columns = [desc[0] for desc in cursor.description]
 rows = [dict(zip(columns, row)) for row in cursor.fetchall()]
 ```
+
 </details>
 
 **Checkpoint:**
+
 ```python
 # Test each tool individually before wiring them together
 from agent.tools import get_schema_info, execute_sql, validate_sql
@@ -453,7 +478,7 @@ assert result["valid"] == False
 
 **Steps:**
 
-1. Implement `create_agent()`:
+1. Implement `create_langchain_agent()`:
    - Initialize your LLM
    - Wrap each tool function as a `langchain_core.tools.Tool`
    - Use `create_react_agent()` or build a simpler chain if ReAct is too complex
@@ -489,18 +514,21 @@ def handle_chat(agent_deps, question, role):
 ```
 
 This is a perfectly valid approach. You can upgrade to a full ReAct agent later.
+
 </details>
 
 <details>
 <summary>How do I extract tables_used?</summary>
 
 Parse the SQL for table names. A simple approach: compare each table name in your catalog against the SQL string. If "Customer" appears in the SQL, it was used.
+
 </details>
 
 **Checkpoint:**
+
 ```python
-from agent.agent import create_agent, handle_chat
-agent = create_agent(catalog, db)
+from agent.agent import create_langchain_agent, handle_chat
+agent = create_langchain_agent(catalog, db)
 result = handle_chat(agent, "How many customers are there?", "admin")
 print(result)
 # Should contain: answer mentioning "59", sql with SELECT COUNT(*),
@@ -565,19 +593,23 @@ print(result)
 <summary>How do I detect PII columns in a SELECT clause?</summary>
 
 Simple approach: for each PII column name, check if it appears in the portion of the SQL before the FROM keyword. This isn't perfect for complex queries but works for 90% of cases.
+
 </details>
 
 <details>
 <summary>What about SELECT *?</summary>
 
 For v1, you can either:
+
 - Reject `SELECT *` queries and ask the agent to be explicit
-- Or add a note in your SQL generation prompt: "Never use SELECT *, always list columns explicitly"
+- Or add a note in your SQL generation prompt: "Never use SELECT \*, always list columns explicitly"
 
 The second approach is better UX and avoids complex SQL rewriting.
+
 </details>
 
 **Checkpoint:**
+
 ```bash
 # As admin — should see real emails
 curl -X POST http://localhost:5000/api/chat \
@@ -624,6 +656,7 @@ curl -X POST http://localhost:5000/api/chat \
 ```python
 row["timestamp"] = row["timestamp"].isoformat() + "Z"
 ```
+
 </details>
 
 <details>
@@ -639,6 +672,7 @@ cursor.execute(
 )
 conn.commit()
 ```
+
 </details>
 
 **Checkpoint:** Ask 3 questions in the Chat UI, then navigate to the Audit page. You should see all 3 logged with timestamps, SQL, and latency.
@@ -707,6 +741,7 @@ conn.commit()
 4. Final check: `cd frontend && npx tsc --noEmit` still passes
 
 **Checkpoint:** You should be able to demo the full application to someone, showing:
+
 - Natural language questions turning into real SQL
 - PII being masked for analysts but visible for admins
 - An audit trail of every query

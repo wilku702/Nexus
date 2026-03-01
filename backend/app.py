@@ -38,8 +38,8 @@ CORS(app)
 #        catalog = CatalogLoader(Config.CATALOG_PATH)
 #
 #   3. Agent:
-#        from agent.agent import create_agent
-#        agent = create_agent(catalog, db)
+#        from agent.agent import create_langchain_agent
+#        agent = create_langchain_agent(catalog, db)
 #
 # Store these as module-level variables so route handlers can use them.
 # ---------------------------------------------------------------------------
@@ -51,10 +51,10 @@ catalog = CatalogLoader(Config.CATALOG_PATH)
 
 agent = None
 try:
-    from agent.agent import create_agent
-    agent = create_agent(catalog, db)
+    from agent.agent import create_langchain_agent
+    agent = create_langchain_agent(catalog, db)
     if agent is None:
-        logger.warning("create_agent() returned None — agent not yet implemented")
+        logger.warning("create_langchain_agent() returned None — agent not yet implemented")
 except Exception as e:
     logger.warning("Failed to initialize agent: %s", e)
 
@@ -149,7 +149,7 @@ def health():
 
     # testing llm
     try:
-      llm = ChatAnthropic(model="claude-haiku-4-5-20251001", api_key=Config.LLM_API_KEY)
+      llm = ChatAnthropic(model_name=Config.LLM_MODEL, api_key=Config.LLM_API_KEY)
       llm.invoke("Say hello")
       status[1] = "connected"
     except Exception as e:

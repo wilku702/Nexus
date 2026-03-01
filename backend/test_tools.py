@@ -8,15 +8,15 @@ Requires Docker PostgreSQL to be running (docker compose up -d).
 
 import os
 
-# Set a dummy LLM key so the module-level ChatAnthropic init doesn't fail on import
-os.environ.setdefault("LLM_API_KEY", "sk-test-dummy-key")
+# # Set a dummy LLM key so the module-level ChatAnthropic init doesn't fail on import
+# os.environ.setdefault("LLM_API_KEY", "sk-test-dummy-key")
 
 import pytest
 import psycopg2
 from catalog.loader import CatalogLoader
 from config import Config
 from agent.tools import get_schema_info, execute_sql, validate_sql
-
+from agent.agent import create_langchain_agent, handle_chat
 
 @pytest.fixture(scope="module")
 def catalog():
@@ -30,6 +30,15 @@ def db():
     yield conn
     conn.close()
 
+# ---------------------------------------------------------------------------
+# create_langchain_agents
+# ---------------------------------------------------------------------------
+
+class TestAgents:
+    def test_agent(self, catalog, db):
+        agent = create_langchain_agent(catalog, db)
+        result = handle_chat(agent, "How many customers are there?", "admin")
+        print(result)
 
 # ---------------------------------------------------------------------------
 # get_schema_info

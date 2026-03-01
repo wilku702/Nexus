@@ -8,7 +8,19 @@
       "Bash(docker compose:*)",
       "Bash(python3:*)",
       "Bash(git:*)",
-      "Bash(*)"
+      "Bash(*)",
+      "WebSearch",
+      "WebFetch(domain:python.langchain.com)",
+      "WebFetch(domain:docs.langchain.com)",
+      "WebFetch(domain:langchain-ai.github.io)",
+      "WebFetch(domain:focused.io)",
+      "WebFetch(domain:github.com)",
+      "WebFetch(domain:raw.githubusercontent.com)",
+      "WebFetch(domain:reference.langchain.com)",
+      "WebFetch(domain:dylancastillo.co)",
+      "mcp__context7__resolve-library-id",
+      "mcp__context7__*",
+      "mcp__context7__query-docs"
     ]
   }
 }

@@ -15,51 +15,64 @@ LangChain components you'll likely use:
 import time
 from catalog.loader import CatalogLoader
 from config import Config
+from langchain_anthropic import ChatAnthropic
+from langchain.tools import tool
+from agent.tools import (
+    get_schema_info, generate_sql, validate_sql, execute_sql, synthesize_answer,
+)
+from langchain.agents import create_agent
+from langchain.messages import HumanMessage
+from agent.prompts import SYSTEM_PROMPT
 
 
-def create_agent(catalog: CatalogLoader, db_connection):
+def create_langchain_agent(catalog: CatalogLoader, db_connection):
     """Create and return the LangChain agent with all tools.
-
-    TODO: Implement. Steps:
-      1. Initialize the LLM:
-           from langchain_openai import ChatOpenAI
-           llm = ChatOpenAI(model=Config.LLM_MODEL, api_key=Config.LLM_API_KEY)
-         OR:
-           from langchain_anthropic import ChatAnthropic
-           llm = ChatAnthropic(model=Config.LLM_MODEL, api_key=Config.LLM_API_KEY)
-
-      2. Create Tool instances wrapping each function from tools.py:
-           from langchain_core.tools import Tool
-           tools = [
-               Tool(name="get_schema_info", func=..., description="..."),
-               Tool(name="generate_sql",    func=..., description="..."),
-               Tool(name="validate_sql",    func=..., description="..."),
-               Tool(name="execute_sql",     func=..., description="..."),
-               Tool(name="synthesize_answer", func=..., description="..."),
-           ]
-
-      3. Build the system prompt from prompts.py:
-           from agent.prompts import SYSTEM_PROMPT
-
-      4. Create the agent:
-           from langchain.agents import create_react_agent, AgentExecutor
-           agent = create_react_agent(llm, tools, prompt)
-           executor = AgentExecutor(agent=agent, tools=tools, verbose=True)
-
-      5. Return the executor
 
     Args:
         catalog: CatalogLoader instance for metadata access
         db_connection: psycopg2 connection to PostgreSQL
 
     Returns:
-        A LangChain AgentExecutor ready to handle questions
+        A LangChain agent ready to handle questions
     """
-    # TODO: Set up LLM, tools, prompt, and agent
-    pass
+
+    llm = ChatAnthropic(model=Config.LLM_MODEL, api_key=Config.LLM_API_KEY)
+
+    @tool
+    def schema_info(question: str) -> str:
+        """Retrieve relevant table/column metadata for a user question."""
+        return get_schema_info(question, catalog)
+
+    @tool
+    def sql_generate(question: str, schema_context: str, role: str) -> str:
+        """Generate a SQL query from a natural language question."""
+        return generate_sql(question, schema_context, role)
+
+    @tool
+    def sql_validate(sql: str, role: str) -> dict:
+        """Safety-check generated SQL before execution."""
+        return validate_sql(sql, role, catalog)
+
+    @tool
+    def sql_execute(sql: str) -> dict:
+        """Execute validated SQL against PostgreSQL and return results."""
+        return execute_sql(sql, db_connection)
+
+    @tool
+    def answer_synthesize(question: str, sql: str, results: dict) -> str:
+        """Convert raw query results into a natural language answer."""
+        return synthesize_answer(question, sql, results)
+
+    tools = [schema_info, sql_generate, sql_validate, sql_execute, answer_synthesize]
+
+    agent = create_agent(model=llm, tools=tools, system_prompt=SYSTEM_PROMPT)
+
+    return agent
+    
+    
 
 
-def handle_chat(agent, question: str, role: str) -> dict:
+def handle_chat(agent, question: str, role: str):
     """Process a user question through the agent and return the response.
 
     This is the function called by the POST /api/chat route.
@@ -90,12 +103,40 @@ def handle_chat(agent, question: str, role: str) -> dict:
       - SQL validation fails → return the validation error as the answer
 
     Args:
-        agent: The LangChain AgentExecutor from create_agent()
+        agent: The LangChain AgentExecutor from create_langchain_agent()
         question: The user's natural language question
         role: "analyst" or "admin"
 
     Returns:
         Dict matching the ChatResponse API contract
     """
-    # TODO: Invoke agent, measure latency, log audit, return response
-    pass
+    start = time.time()
+    
+    # Combine role context and question
+    full_prompt = f"[User Role: {role}]\nQuestion: {question}"
+    
+    try:
+        result = agent.invoke({
+            "messages": [HumanMessage(content=full_prompt)]
+        })
+        
+        final_answer = result["messages"][-1].content
+        latency_ms = int((time.time() - start) * 1000)
+        
+        # TODO: Parse sql and tables_used from intermediate steps
+        
+        return {
+            "answer": result,
+            "sql": "", 
+            "tables_used": [],
+            "latency_ms": latency_ms
+        }
+        
+    except Exception as e:
+        latency_ms = int((time.time() - start) * 1000)
+        return {
+            "answer": f"I encountered an error: {str(e)}",
+            "sql": "",
+            "tables_used": [],
+            "latency_ms": latency_ms
+        }

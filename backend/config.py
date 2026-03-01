@@ -15,7 +15,7 @@ class Config:
         "DATABASE_URL", "postgresql://nexus:nexus@localhost:5455/nexus"
     )
     LLM_API_KEY: str = os.getenv("LLM_API_KEY", "")
-    LLM_MODEL: str = os.getenv("LLM_MODEL", "gpt-4o")
+    LLM_MODEL: str = os.getenv("LLM_MODEL", "claude-haiku-4-5-20251001")
     CATALOG_PATH: str = os.getenv(
         "CATALOG_PATH", os.path.join(os.path.dirname(__file__), "catalog", "metadata.yaml")
     )

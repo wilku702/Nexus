@@ -86,7 +86,7 @@ def run_evaluation(agent, test_cases: list[dict], db_connection) -> dict:
          }}
 
     Args:
-        agent: The LangChain AgentExecutor from create_agent()
+        agent: The LangChain AgentExecutor from create_langchain_agent()
         test_cases: List of test case dicts from load_test_cases()
         db_connection: psycopg2 connection for SQL correctness checking
 
