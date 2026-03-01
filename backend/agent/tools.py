@@ -12,8 +12,14 @@ Typical flow:
 """
 
 from catalog.loader import CatalogLoader
-from auth.roles import UserRole
+from auth.roles import UserRole, filter_pii_from_sql
+import sqlparse
+from sqlparse import tokens as T
+from langchain_anthropic import ChatAnthropic
+from config import Config
+from agent.prompts import SQL_GENERATION_PROMPT, SYSTEM_PROMPT, ANSWER_SYNTHESIS_PROMPT
 
+llm = ChatAnthropic(model="claude-haiku-4-5-20251001", api_key=Config.LLM_API_KEY)
 
 # ---------------------------------------------------------------------------
 # Tool 1: get_schema_info
@@ -34,7 +40,9 @@ def get_schema_info(question: str, catalog: CatalogLoader) -> str:
     Without good context here, the LLM will hallucinate table/column names.
     """
     # TODO: Return formatted schema context
-    pass
+    # pass
+    return catalog.get_context_for_question(question)
+
 
 
 # ---------------------------------------------------------------------------
@@ -62,7 +70,27 @@ def generate_sql(question: str, schema_context: str, role: str) -> str:
       - Column names need double-quoting for PostgreSQL (PascalCase)
     """
     # TODO: Build prompt, call LLM, extract SQL
-    pass
+    # pass
+    prompt = SQL_GENERATION_PROMPT.format(
+        schema_context=schema_context,
+        question=question,
+        role=role
+    )
+    response = llm.invoke(prompt)
+    sql = response.content
+    
+    sql = sql.strip()
+    if sql.startswith("```"):
+        sql = sql.split("\n", 1)[1]  # remove first line
+    if sql.endswith("```"):
+        sql = sql.rsplit("```", 1)[0]  # remove last line
+    sql = sql.strip()
+    
+    if 'CANNOT_ANSWER' in sql:
+      sql = ''
+    
+    return sql
+    
 
 
 # ---------------------------------------------------------------------------
@@ -91,8 +119,36 @@ def validate_sql(sql: str, role: str, catalog: CatalogLoader) -> dict:
     string matching (e.g., sql.strip().upper().startswith("SELECT")).
     """
     # TODO: Implement SQL validation checks
-    pass
+    # pass
+    statements = sqlparse.parse(sql)
+    table_names = set([ val['table_name'] for val in catalog.get_all_tables() ])
+    has_limit = False
 
+    # check if referenced table exist in the catalog
+    referenced_table = None
+    for statement in statements:
+      for i, token in enumerate(statement.tokens):
+        val = token.value.upper()
+        if token.ttype in (T.Keyword.DML, T.Keyword.DDL):
+          if val != 'SELECT':
+            return { "valid": False, "reason": "Not a select statement", "sql": sql }
+        if token.ttype is T.Keyword:
+          if val == 'FROM':
+            idx, next_token = statement.token_next(i, skip_ws=True)
+            if next_token.value not in table_names:
+                return { "valid": False, "reason": "Table doesn't exist", "sql": sql }
+            referenced_table = next_token.value
+          elif val == 'LIMIT':
+              has_limit = True
+
+    pii_columns = catalog.get_pii_columns(referenced_table) if referenced_table else []
+    user_role = UserRole(role) if isinstance(role, str) else role
+    sql = filter_pii_from_sql( sql, pii_columns, user_role )
+
+    if not has_limit:
+        sql += ' LIMIT 50'
+
+    return { "valid": True, "sql": sql }
 
 # ---------------------------------------------------------------------------
 # Tool 4: execute_sql
@@ -121,7 +177,28 @@ def execute_sql(sql: str, db_connection) -> dict:
       - Connection pooling: reuse the connection, don't reconnect per query
     """
     # TODO: Execute query and return results
-    pass
+    # pass
+    cursor = None
+    try:
+        if not sql:
+            raise Exception('SQL command is empty')
+
+        cursor = db_connection.cursor()
+        cursor.execute("SET statement_timeout = '10s'")
+        cursor.execute(sql)
+
+        columns = [desc[0] for desc in cursor.description]
+        rows = [dict(zip(columns, row)) for row in cursor.fetchall()]
+
+        return { "rows": rows, "row_count": len(rows), "columns": columns }
+
+    except Exception as e:
+        print(f'Error executing script')
+        db_connection.rollback()
+        return { "rows": [], "row_count": 0, "error": str(e) }
+    finally:
+        if cursor:
+            cursor.close()
 
 
 # ---------------------------------------------------------------------------
@@ -148,4 +225,14 @@ def synthesize_answer(question: str, sql: str, results: dict) -> str:
       - NOT just dump the raw data — summarize it
     """
     # TODO: Build prompt, call LLM, return natural language answer
-    pass
+    # pass
+    
+    prompt = ANSWER_SYNTHESIS_PROMPT.format(
+      question=question,
+      sql=sql,
+      results=results,
+    )
+    
+    response = llm.invoke(prompt)
+    return response.content 
+    

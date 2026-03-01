@@ -16,6 +16,7 @@ Run with:
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 from config import Config
+from langchain_anthropic import ChatAnthropic
 
 app = Flask(__name__)
 CORS(app)
@@ -141,6 +142,8 @@ def health():
     
     # testing llm
     try:
+      llm = ChatAnthropic(model="claude-haiku-4-5-20251001", api_key=Config.LLM_API_KEY)
+      llm.invoke("Say hello")
       status[1] = "connected"
     except Exception as e:
       status[1] = "disconnected"

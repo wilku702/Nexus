@@ -40,7 +40,7 @@ def verify_connection():
 
       for (table,) in tables:
         cursor.execute(f"SELECT COUNT(*) from {table}")
-        print(f"{table}: {cursor.fetchall()[0]} rows")
+        print(f"{table}: {cursor.fetchone()[0]} rows")
 
       print(f"\nFound {len(tables)} tables, all OK")
       cursor.close()

@@ -1,0 +1,14 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(.venv/bin/python:*)",
+      "Bash(/Users/wilku/workspace/personal/Nexus/backend/.venv/bin/python:*)",
+      "Bash(.venv/bin/pytest:*)",
+      "Bash(ls:*)",
+      "Bash(docker compose:*)",
+      "Bash(python3:*)",
+      "Bash(git:*)",
+      "Bash(*)"
+    ]
+  }
+}

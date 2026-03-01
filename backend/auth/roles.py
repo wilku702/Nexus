@@ -9,7 +9,9 @@ columns when an analyst makes a query.
 """
 
 from enum import Enum
-
+import sqlparse
+from sqlparse.sql import IdentifierList, Identifier
+from sqlparse import tokens as T
 
 class UserRole(Enum):
     """User roles for access control."""
@@ -77,4 +79,30 @@ def filter_pii_from_sql(sql: str, pii_columns: list[str], role: UserRole) -> str
         The SQL string, possibly modified to mask PII
     """
     # TODO: Implement PII masking for analyst role
-    pass
+    # pass
+    
+    if role == UserRole.ADMIN:
+      return sql
+    elif role == UserRole.ANALYST:
+      modified_sql = sql[:]
+      statements = sqlparse.parse(sql)
+
+      # check if referenced table exist in the catalog
+      for statement in statements:
+        for i, token in enumerate(statement.tokens):
+          val = token.value.upper()
+          if token.ttype is T.Keyword:
+            if val == 'FROM':
+              break
+          if isinstance(token, IdentifierList):
+            for identifier in token.get_identifiers():
+              name = identifier.get_name()
+              if name in pii_columns:
+                  modified_sql = modified_sql.replace(name, f"'***' AS {name}", 1)
+          elif isinstance(token, Identifier):
+              name = token.get_name()
+              if name in pii_columns:
+                  modified_sql = modified_sql.replace(name, f"'***' AS {name}", 1)
+                
+      
+      return modified_sql
