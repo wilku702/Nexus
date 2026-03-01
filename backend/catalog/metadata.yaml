@@ -4,20 +4,7 @@
 # The agent reads this to understand what data exists, what columns mean,
 # and which ones contain PII.
 #
-# Structure per table:
-#   table_name        — exact PostgreSQL table name (PascalCase)
-#   description       — plain-English explanation of what this table stores
-#   owner             — team that owns this data
-#   governance_level  — "public" | "internal" | "restricted"
-#   columns           — list of column metadata
-#
-# Structure per column:
-#   column_name     — exact column name (PascalCase, must match DB)
-#   data_type       — PostgreSQL data type
-#   description     — what this column contains
-#   is_pii          — true if personally identifiable information
-#   sample_values   — 2-3 example values (helps the LLM understand the data)
-#   governance_tag  — "public" | "pii" | "sensitive"
+# Column names use snake_case to match the actual PostgreSQL schema.
 #
 # Governance tags:
 #   public    — safe for anyone (genre names, track titles, etc.)
@@ -26,129 +13,484 @@
 
 tables:
   # ──────────────────────────────────────────────
-  # EXAMPLE — Customer table (fully filled in)
-  # Use this as a reference pattern for the remaining 10 tables.
+  # album
   # ──────────────────────────────────────────────
-  - table_name: "Customer"
+  - table_name: "album"
+    description: "Music albums, each linked to a single artist"
+    owner: "music_team"
+    governance_level: "public"
+    columns:
+      - column_name: "album_id"
+        data_type: "integer"
+        description: "Primary key, unique album identifier"
+        is_pii: false
+        sample_values: ["1", "2", "3"]
+        governance_tag: "public"
+      - column_name: "title"
+        data_type: "varchar(160)"
+        description: "Album title"
+        is_pii: false
+        sample_values: ["Heart of the Night", "The Cream Of Clapton", "Van Halen III"]
+        governance_tag: "public"
+      - column_name: "artist_id"
+        data_type: "integer"
+        description: "Foreign key to artist table"
+        is_pii: false
+        sample_values: ["1", "2", "3"]
+        governance_tag: "public"
+
+  # ──────────────────────────────────────────────
+  # artist
+  # ──────────────────────────────────────────────
+  - table_name: "artist"
+    description: "Musical artists and bands"
+    owner: "music_team"
+    governance_level: "public"
+    columns:
+      - column_name: "artist_id"
+        data_type: "integer"
+        description: "Primary key, unique artist identifier"
+        is_pii: false
+        sample_values: ["1", "2", "3"]
+        governance_tag: "public"
+      - column_name: "name"
+        data_type: "varchar(120)"
+        description: "Artist or band name"
+        is_pii: false
+        sample_values: ["Legião Urbana", "Ben Harper", "Incognito"]
+        governance_tag: "public"
+
+  # ──────────────────────────────────────────────
+  # customer
+  # ──────────────────────────────────────────────
+  - table_name: "customer"
     description: "Stores customer account information including contact details and location"
     owner: "sales_team"
     governance_level: "internal"
     columns:
-      - column_name: "CustomerId"
+      - column_name: "customer_id"
         data_type: "integer"
         description: "Primary key, unique customer identifier"
         is_pii: false
         sample_values: ["1", "2", "3"]
         governance_tag: "public"
-      - column_name: "FirstName"
+      - column_name: "first_name"
         data_type: "varchar(40)"
         description: "Customer first name"
         is_pii: true
-        sample_values: ["Luís", "Leonie"]
+        sample_values: ["Martha", "Edward", "Victor"]
         governance_tag: "pii"
-      - column_name: "LastName"
+      - column_name: "last_name"
         data_type: "varchar(20)"
         description: "Customer last name"
         is_pii: true
-        sample_values: ["Gonçalves", "Köhler"]
+        sample_values: ["Silk", "Francis", "Stevens"]
         governance_tag: "pii"
-      - column_name: "Company"
+      - column_name: "company"
         data_type: "varchar(80)"
         description: "Customer company name (nullable)"
         is_pii: false
-        sample_values: ["Embraer", "JetBrains"]
+        sample_values: ["Apple Inc.", "Telus", "Embraer"]
         governance_tag: "public"
-      - column_name: "Email"
-        data_type: "varchar(60)"
-        description: "Customer email address"
-        is_pii: true
-        sample_values: ["luisg@embraer.com.br"]
-        governance_tag: "pii"
-      - column_name: "Phone"
-        data_type: "varchar(24)"
-        description: "Customer phone number"
-        is_pii: true
-        sample_values: ["+55 (12) 3923-5555"]
-        governance_tag: "pii"
-      - column_name: "Address"
+      - column_name: "address"
         data_type: "varchar(70)"
         description: "Customer street address"
         is_pii: true
         sample_values: ["Av. Brigadeiro Faria Lima, 2170"]
         governance_tag: "pii"
-      - column_name: "City"
+      - column_name: "city"
         data_type: "varchar(40)"
         description: "Customer city"
         is_pii: true
-        sample_values: ["São José dos Campos", "Stuttgart"]
+        sample_values: ["Budapest", "Porto", "Reno"]
         governance_tag: "pii"
-      - column_name: "State"
+      - column_name: "state"
         data_type: "varchar(40)"
         description: "Customer state or province (nullable)"
         is_pii: true
-        sample_values: ["SP", "QC"]
+        sample_values: ["SP", "CA", "RM"]
         governance_tag: "pii"
-      - column_name: "Country"
+      - column_name: "country"
         data_type: "varchar(40)"
         description: "Customer country"
         is_pii: false
-        sample_values: ["Brazil", "Germany", "Canada"]
+        sample_values: ["Argentina", "Spain", "Hungary"]
         governance_tag: "public"
-      - column_name: "PostalCode"
+      - column_name: "postal_code"
         data_type: "varchar(10)"
         description: "Customer postal/zip code"
         is_pii: true
-        sample_values: ["12227-000", "70174"]
+        sample_values: ["53703", "1010", "N1 5LH"]
         governance_tag: "pii"
-      - column_name: "Fax"
+      - column_name: "phone"
+        data_type: "varchar(24)"
+        description: "Customer phone number"
+        is_pii: true
+        sample_values: ["+55 (11) 3055-3278"]
+        governance_tag: "pii"
+      - column_name: "fax"
         data_type: "varchar(24)"
         description: "Customer fax number (nullable)"
         is_pii: true
         sample_values: ["+55 (12) 3923-5566"]
         governance_tag: "pii"
-      - column_name: "SupportRepId"
+      - column_name: "email"
+        data_type: "varchar(60)"
+        description: "Customer email address"
+        is_pii: true
+        sample_values: ["ladislav_kovacs@apple.hu", "johngordon22@yahoo.com"]
+        governance_tag: "pii"
+      - column_name: "support_rep_id"
         data_type: "integer"
-        description: "Foreign key to Employee table — assigned support representative"
+        description: "Foreign key to employee table — assigned support representative"
         is_pii: false
         sample_values: ["3", "4", "5"]
         governance_tag: "public"
 
   # ──────────────────────────────────────────────
-  # TODO: Add the remaining 10 Chinook tables below.
-  # Follow the exact same pattern as Customer above.
-  #
-  # Tables to add:
-  #   1. Album       (AlbumId, Title, ArtistId)
-  #   2. Artist      (ArtistId, Name)
-  #   3. Employee    (EmployeeId, LastName, FirstName, Title, ReportsTo,
-  #                   BirthDate, HireDate, Address, City, State, Country,
-  #                   PostalCode, Phone, Fax, Email)
-  #                   ⚠️  Employee has MANY PII columns — tag them all
-  #   4. Genre       (GenreId, Name)
-  #   5. Invoice     (InvoiceId, CustomerId, InvoiceDate, BillingAddress,
-  #                   BillingCity, BillingState, BillingCountry,
-  #                   BillingPostalCode, Total)
-  #                   ⚠️  Total is "sensitive" (revenue data)
-  #   6. InvoiceLine (InvoiceLineId, InvoiceId, TrackId, UnitPrice, Quantity)
-  #                   ⚠️  UnitPrice is "sensitive"
-  #   7. MediaType   (MediaTypeId, Name)
-  #   8. Playlist    (PlaylistId, Name)
-  #   9. PlaylistTrack (PlaylistId, TrackId)
-  #  10. Track       (TrackId, Name, AlbumId, MediaTypeId, GenreId,
-  #                   Composer, Milliseconds, Bytes, UnitPrice)
-  #                   ⚠️  UnitPrice is "sensitive"
-  #
-  # Tips:
-  #   - Look at the actual Chinook data for sample_values
-  #   - Mark revenue/price columns as governance_tag: "sensitive"
-  #   - Mark personal contact info as governance_tag: "pii"
-  #   - Everything else is governance_tag: "public"
+  # employee
   # ──────────────────────────────────────────────
+  - table_name: "employee"
+    description: "Company employees with job titles and reporting structure"
+    owner: "hr_team"
+    governance_level: "restricted"
+    columns:
+      - column_name: "employee_id"
+        data_type: "integer"
+        description: "Primary key, unique employee identifier"
+        is_pii: false
+        sample_values: ["1", "2", "3"]
+        governance_tag: "public"
+      - column_name: "last_name"
+        data_type: "varchar(20)"
+        description: "Employee last name"
+        is_pii: true
+        sample_values: ["Adams", "Edwards", "Peacock"]
+        governance_tag: "pii"
+      - column_name: "first_name"
+        data_type: "varchar(20)"
+        description: "Employee first name"
+        is_pii: true
+        sample_values: ["Andrew", "Nancy", "Jane"]
+        governance_tag: "pii"
+      - column_name: "title"
+        data_type: "varchar(30)"
+        description: "Job title"
+        is_pii: false
+        sample_values: ["General Manager", "Sales Support Agent", "IT Manager"]
+        governance_tag: "public"
+      - column_name: "reports_to"
+        data_type: "integer"
+        description: "Foreign key to employee table — manager (nullable for top-level)"
+        is_pii: false
+        sample_values: ["1", "2", "6"]
+        governance_tag: "public"
+      - column_name: "birth_date"
+        data_type: "timestamp"
+        description: "Employee date of birth"
+        is_pii: true
+        sample_values: ["1962-02-18", "1958-12-08"]
+        governance_tag: "pii"
+      - column_name: "hire_date"
+        data_type: "timestamp"
+        description: "Date the employee was hired"
+        is_pii: false
+        sample_values: ["2002-08-14", "2003-10-17"]
+        governance_tag: "public"
+      - column_name: "address"
+        data_type: "varchar(70)"
+        description: "Employee street address"
+        is_pii: true
+        sample_values: ["11120 Jasper Ave NW"]
+        governance_tag: "pii"
+      - column_name: "city"
+        data_type: "varchar(40)"
+        description: "Employee city"
+        is_pii: true
+        sample_values: ["Edmonton", "Calgary", "Lethbridge"]
+        governance_tag: "pii"
+      - column_name: "state"
+        data_type: "varchar(40)"
+        description: "Employee state or province"
+        is_pii: true
+        sample_values: ["AB"]
+        governance_tag: "pii"
+      - column_name: "country"
+        data_type: "varchar(40)"
+        description: "Employee country"
+        is_pii: false
+        sample_values: ["Canada"]
+        governance_tag: "public"
+      - column_name: "postal_code"
+        data_type: "varchar(10)"
+        description: "Employee postal code"
+        is_pii: true
+        sample_values: ["T5K 2N1", "T2P 5G3"]
+        governance_tag: "pii"
+      - column_name: "phone"
+        data_type: "varchar(24)"
+        description: "Employee phone number"
+        is_pii: true
+        sample_values: ["+1 (780) 428-9482"]
+        governance_tag: "pii"
+      - column_name: "fax"
+        data_type: "varchar(24)"
+        description: "Employee fax number"
+        is_pii: true
+        sample_values: ["+1 (780) 428-3457"]
+        governance_tag: "pii"
+      - column_name: "email"
+        data_type: "varchar(60)"
+        description: "Employee email address"
+        is_pii: true
+        sample_values: ["andrew@chinookcorp.com", "nancy@chinookcorp.com"]
+        governance_tag: "pii"
 
-  # - table_name: "Album"
-  #   description: "..."
-  #   owner: "..."
-  #   governance_level: "..."
-  #   columns:
-  #     - column_name: "AlbumId"
-  #       ...
+  # ──────────────────────────────────────────────
+  # genre
+  # ──────────────────────────────────────────────
+  - table_name: "genre"
+    description: "Music genres for categorizing tracks"
+    owner: "music_team"
+    governance_level: "public"
+    columns:
+      - column_name: "genre_id"
+        data_type: "integer"
+        description: "Primary key, unique genre identifier"
+        is_pii: false
+        sample_values: ["1", "2", "3"]
+        governance_tag: "public"
+      - column_name: "name"
+        data_type: "varchar(120)"
+        description: "Genre name"
+        is_pii: false
+        sample_values: ["Heavy Metal", "Latin", "Electronica/Dance", "TV Shows"]
+        governance_tag: "public"
+
+  # ──────────────────────────────────────────────
+  # invoice
+  # ──────────────────────────────────────────────
+  - table_name: "invoice"
+    description: "Customer purchase invoices with billing details and totals"
+    owner: "finance_team"
+    governance_level: "internal"
+    columns:
+      - column_name: "invoice_id"
+        data_type: "integer"
+        description: "Primary key, unique invoice identifier"
+        is_pii: false
+        sample_values: ["1", "2", "3"]
+        governance_tag: "public"
+      - column_name: "customer_id"
+        data_type: "integer"
+        description: "Foreign key to customer table"
+        is_pii: false
+        sample_values: ["2", "4", "8"]
+        governance_tag: "public"
+      - column_name: "invoice_date"
+        data_type: "timestamp"
+        description: "Date the invoice was issued"
+        is_pii: false
+        sample_values: ["2009-01-01", "2009-01-02"]
+        governance_tag: "public"
+      - column_name: "billing_address"
+        data_type: "varchar(70)"
+        description: "Billing street address (copied from customer at time of purchase)"
+        is_pii: true
+        sample_values: ["Theodor-Heuss-Straße 34"]
+        governance_tag: "pii"
+      - column_name: "billing_city"
+        data_type: "varchar(40)"
+        description: "Billing city"
+        is_pii: true
+        sample_values: ["Porto", "Budapest", "Reno"]
+        governance_tag: "pii"
+      - column_name: "billing_state"
+        data_type: "varchar(40)"
+        description: "Billing state or province (nullable)"
+        is_pii: true
+        sample_values: ["SP", "CA"]
+        governance_tag: "pii"
+      - column_name: "billing_country"
+        data_type: "varchar(40)"
+        description: "Billing country"
+        is_pii: false
+        sample_values: ["Argentina", "Spain", "Italy"]
+        governance_tag: "public"
+      - column_name: "billing_postal_code"
+        data_type: "varchar(10)"
+        description: "Billing postal/zip code (nullable)"
+        is_pii: true
+        sample_values: ["53703", "1010"]
+        governance_tag: "pii"
+      - column_name: "total"
+        data_type: "numeric"
+        description: "Total invoice amount in USD"
+        is_pii: false
+        sample_values: ["8.94", "9.91", "15.86"]
+        governance_tag: "sensitive"
+
+  # ──────────────────────────────────────────────
+  # invoice_line
+  # ──────────────────────────────────────────────
+  - table_name: "invoice_line"
+    description: "Individual line items on each invoice, linking invoices to tracks"
+    owner: "finance_team"
+    governance_level: "internal"
+    columns:
+      - column_name: "invoice_line_id"
+        data_type: "integer"
+        description: "Primary key, unique line item identifier"
+        is_pii: false
+        sample_values: ["1", "2", "3"]
+        governance_tag: "public"
+      - column_name: "invoice_id"
+        data_type: "integer"
+        description: "Foreign key to invoice table"
+        is_pii: false
+        sample_values: ["1", "2", "3"]
+        governance_tag: "public"
+      - column_name: "track_id"
+        data_type: "integer"
+        description: "Foreign key to track table"
+        is_pii: false
+        sample_values: ["2", "4", "6"]
+        governance_tag: "public"
+      - column_name: "unit_price"
+        data_type: "numeric"
+        description: "Price per unit of the track at time of purchase"
+        is_pii: false
+        sample_values: ["0.99", "1.99"]
+        governance_tag: "sensitive"
+      - column_name: "quantity"
+        data_type: "integer"
+        description: "Number of units purchased (usually 1)"
+        is_pii: false
+        sample_values: ["1"]
+        governance_tag: "public"
+
+  # ──────────────────────────────────────────────
+  # media_type
+  # ──────────────────────────────────────────────
+  - table_name: "media_type"
+    description: "Audio and video format types for tracks"
+    owner: "music_team"
+    governance_level: "public"
+    columns:
+      - column_name: "media_type_id"
+        data_type: "integer"
+        description: "Primary key, unique media type identifier"
+        is_pii: false
+        sample_values: ["1", "2", "3"]
+        governance_tag: "public"
+      - column_name: "name"
+        data_type: "varchar(120)"
+        description: "Media format name"
+        is_pii: false
+        sample_values: ["MPEG audio file", "AAC audio file", "Protected MPEG-4 video file"]
+        governance_tag: "public"
+
+  # ──────────────────────────────────────────────
+  # playlist
+  # ──────────────────────────────────────────────
+  - table_name: "playlist"
+    description: "Named playlists that group tracks together"
+    owner: "music_team"
+    governance_level: "public"
+    columns:
+      - column_name: "playlist_id"
+        data_type: "integer"
+        description: "Primary key, unique playlist identifier"
+        is_pii: false
+        sample_values: ["1", "2", "3"]
+        governance_tag: "public"
+      - column_name: "name"
+        data_type: "varchar(120)"
+        description: "Playlist name"
+        is_pii: false
+        sample_values: ["TV Shows", "Movies", "Music Videos"]
+        governance_tag: "public"
+
+  # ──────────────────────────────────────────────
+  # playlist_track
+  # ──────────────────────────────────────────────
+  - table_name: "playlist_track"
+    description: "Junction table mapping tracks to playlists (many-to-many)"
+    owner: "music_team"
+    governance_level: "public"
+    columns:
+      - column_name: "playlist_id"
+        data_type: "integer"
+        description: "Foreign key to playlist table (part of composite primary key)"
+        is_pii: false
+        sample_values: ["1", "5", "8"]
+        governance_tag: "public"
+      - column_name: "track_id"
+        data_type: "integer"
+        description: "Foreign key to track table (part of composite primary key)"
+        is_pii: false
+        sample_values: ["1", "10", "100"]
+        governance_tag: "public"
+
+  # ──────────────────────────────────────────────
+  # track
+  # ──────────────────────────────────────────────
+  - table_name: "track"
+    description: "Individual songs/tracks with pricing, duration, and categorization"
+    owner: "music_team"
+    governance_level: "public"
+    columns:
+      - column_name: "track_id"
+        data_type: "integer"
+        description: "Primary key, unique track identifier"
+        is_pii: false
+        sample_values: ["1", "2", "3"]
+        governance_tag: "public"
+      - column_name: "name"
+        data_type: "varchar(200)"
+        description: "Track/song title"
+        is_pii: false
+        sample_values: ["Anyway, Anyhow, Anywhere", "I Still Haven't Found What I'm Looking for"]
+        governance_tag: "public"
+      - column_name: "album_id"
+        data_type: "integer"
+        description: "Foreign key to album table (nullable)"
+        is_pii: false
+        sample_values: ["1", "2", "3"]
+        governance_tag: "public"
+      - column_name: "media_type_id"
+        data_type: "integer"
+        description: "Foreign key to media_type table"
+        is_pii: false
+        sample_values: ["1", "2"]
+        governance_tag: "public"
+      - column_name: "genre_id"
+        data_type: "integer"
+        description: "Foreign key to genre table (nullable)"
+        is_pii: false
+        sample_values: ["1", "2", "3"]
+        governance_tag: "public"
+      - column_name: "composer"
+        data_type: "varchar(220)"
+        description: "Track composer/songwriter (nullable)"
+        is_pii: false
+        sample_values: ["Aldir Blanc/Jayme Vignoli", "Grazielle/Roque Ferreira"]
+        governance_tag: "public"
+      - column_name: "milliseconds"
+        data_type: "integer"
+        description: "Track duration in milliseconds"
+        is_pii: false
+        sample_values: ["343719", "258234", "199836"]
+        governance_tag: "public"
+      - column_name: "bytes"
+        data_type: "integer"
+        description: "Track file size in bytes (nullable)"
+        is_pii: false
+        sample_values: ["11170334", "8596840"]
+        governance_tag: "public"
+      - column_name: "unit_price"
+        data_type: "numeric"
+        description: "Track price in USD"
+        is_pii: false
+        sample_values: ["0.99", "1.99"]
+        governance_tag: "sensitive"

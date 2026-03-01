@@ -27,7 +27,22 @@ class CatalogLoader:
             yaml.YAMLError: If the YAML is malformed
         """
         # TODO: Load and parse the YAML file
-        pass
+        # pass
+        try:
+          content = open(catalog_path).read()
+        except FileNotFoundError:
+            raise FileNotFoundError(f"Catalog not found: {catalog_path}")
+
+        try:
+            data = yaml.safe_load(content)
+        except yaml.YAMLError as e:
+            raise yaml.YAMLError(f"Malformed YAML: {e}")
+
+        self._tables = data["tables"]
+        self._by_name = {}
+
+        for table_dict in self._tables:
+            self._by_name[table_dict["table_name"]] = table_dict
 
     def get_all_tables(self) -> list[dict]:
         """Return summary metadata for all tables.
@@ -43,8 +58,16 @@ class CatalogLoader:
 
         Do NOT include the full columns list here — that's for get_table().
         """
-        # TODO: Return table summaries
-        pass
+        return [
+            {
+                "table_name": t["table_name"],
+                "description": t["description"],
+                "owner": t["owner"],
+                "governance_level": t["governance_level"],
+                "column_count": len(t.get("columns", [])),
+            }
+            for t in self._tables
+        ]
 
     def get_table(self, table_name: str) -> dict | None:
         """Return full metadata for a specific table including all columns.
@@ -59,8 +82,13 @@ class CatalogLoader:
         The returned dict should match the API contract:
           { table_name, description, owner, governance_level, column_count, columns: [...] }
         """
-        # TODO: Look up and return table metadata
-        pass
+        table = self._by_name.get(table_name) or self._by_name.get(table_name.lower())
+        if table is None:
+          return None
+        return {
+            **table,
+            "column_count": len(table.get("columns", [])),
+        }
 
     def get_pii_columns(self, table_name: str) -> list[str]:
         """Return list of PII column names for a given table.
@@ -73,8 +101,14 @@ class CatalogLoader:
           3. Return just the column names as a list of strings
           4. Return empty list if table not found
         """
-        # TODO: Filter and return PII column names
-        pass
+        table = self.get_table(table_name)
+        if table is None:
+          return []
+        return [
+            col["column_name"]
+            for col in table.get("columns", [])
+            if col.get("is_pii")
+        ]
 
     def get_context_for_question(self, question: str) -> str:
         """Return formatted metadata context to inject into the LLM prompt.
@@ -102,5 +136,20 @@ class CatalogLoader:
         Returns:
             A formatted string of table/column metadata
         """
-        # TODO: Format and return metadata context string
-        pass
+        lines = []
+        for table in self._tables:
+            lines.append(f"Table: {table['table_name']}")
+            lines.append(f"  Description: {table['description']}")
+            lines.append("  Columns:")
+            for col in table.get("columns", []):
+                parts = [f"    - {col['column_name']} ({col['data_type']}): {col['description']}"]
+                if col.get("is_pii"):
+                    parts.append(" [PII]")
+                if col.get("governance_tag") == "sensitive":
+                    parts.append(" [SENSITIVE]")
+                samples = col.get("sample_values", [])
+                if samples:
+                    parts.append(f" [sample: {', '.join(samples)}]")
+                lines.append("".join(parts))
+            lines.append("")
+        return "\n".join(lines)

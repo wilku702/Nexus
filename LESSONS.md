@@ -272,8 +272,8 @@ print(f'Customer PII cols: {c.get_pii_columns(\"Customer\")}')
 5. Start the server: `python app.py`
 6. Test with curl:
    ```bash
-   curl http://localhost:5000/api/catalog/tables | python -m json.tool
-   curl http://localhost:5000/api/catalog/tables/Customer | python -m json.tool
+   curl http://localhost:5173/api/catalog/tables | python -m json.tool
+   curl http://localhost:5173/api/catalog/tables/Customer | python -m json.tool
    curl http://localhost:5000/api/health
    ```
 

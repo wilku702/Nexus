@@ -39,7 +39,14 @@ CORS(app)
 #
 # Store these as module-level variables so route handlers can use them.
 # ---------------------------------------------------------------------------
+import psycopg2
+from catalog.loader import CatalogLoader
 
+db = psycopg2.connect(Config.DATABASE_URL)
+catalog = CatalogLoader(Config.CATALOG_PATH)
+
+from agent.agent import create_agent
+agent = create_agent(catalog, db)
 
 # ---------------------------------------------------------------------------
 # Routes
@@ -60,8 +67,11 @@ def chat():
     Request:  { "question": "How many customers?", "role": "analyst" }
     Response: { "answer": "...", "sql": "...", "tables_used": [...], "latency_ms": 1234 }
     """
-    # TODO: Implement chat endpoint
-    pass
+    # # TODO: Implement chat endpoint
+    # pass
+  
+
+
 
 
 @app.route("/api/catalog/tables", methods=["GET"])
@@ -75,8 +85,10 @@ def get_tables():
     Response: [{ "table_name": "...", "description": "...", "owner": "...",
                  "governance_level": "...", "column_count": 13 }, ...]
     """
-    # TODO: Implement catalog tables list
-    pass
+    # # TODO: Implement catalog tables list
+    # pass
+    table_metadata = catalog.get_all_tables()
+    return jsonify(table_metadata), 200
 
 
 @app.route("/api/catalog/tables/<name>", methods=["GET"])
@@ -91,7 +103,14 @@ def get_table(name):
     Response: { "table_name": "...", ..., "columns": [{ "column_name": "...", ... }, ...] }
     """
     # TODO: Implement single table detail
-    pass
+    # pass
+    table_metadata = catalog.get_table(name)
+    status = 200
+    if not table_metadata:
+      table_metadata = { "error": "Table not found" }
+      status = 404
+
+    return jsonify(table_metadata), status
 
 
 @app.route("/api/health", methods=["GET"])
@@ -110,8 +129,33 @@ def health():
 
     Response: { "status": "healthy", "database": "connected", "llm": "connected" }
     """
-    # TODO: Implement health check
-    pass
+    # # TODO: Implement health check
+    # pass
+    status = ["", ""]
+    # testing database
+    try:
+      db.cursor().execute("SELECT 1")
+      status[0] = "connected"
+    except Exception as e:
+      status[0] = "disconnected"
+    
+    # testing llm
+    try:
+      status[1] = "connected"
+    except Exception as e:
+      status[1] = "disconnected"
+    
+    overall = ""
+    count = status.count("connected")
+    if count == 2:
+      overall = "healthy"
+    elif count == 1:
+      overall = "degraded"
+    else:
+      overall = "down"
+    
+    return jsonify( { "status": overall, "database": status[0], "llm": status[1] } )
+
 
 
 @app.route("/api/audit", methods=["GET"])

@@ -1,8 +1,10 @@
 import { useEffect } from 'react';
 import { useCatalogStore } from '../../stores/useCatalogStore';
-import { MOCK_TABLES, MOCK_TABLE_DETAIL } from '../../mocks/data';
 import { TableList } from './TableList';
 import { TableDetail } from './TableDetail';
+import { fetchTables } from '../../api/catalog';
+import { fetchTableDetail } from '../../api/catalog';
+
 
 export function CatalogBrowser() {
   const { tables, selectedTable, isLoadingList, isLoadingDetail, setTables, setSelectedTable, setLoadingList, setLoadingDetail } = useCatalogStore();
@@ -15,8 +17,9 @@ export function CatalogBrowser() {
     // Use: import { fetchTables } from '../../api/catalog';
     //      const tables = await fetchTables();
     //      setTables(tables);
-    setTimeout(() => {
-      setTables(MOCK_TABLES);
+    setTimeout(async () => {
+      const tables = await fetchTables();
+      setTables(tables);
       setLoadingList(false);
     }, 400);
   }, [setTables, setLoadingList]);
@@ -29,8 +32,9 @@ export function CatalogBrowser() {
     // Use: import { fetchTableDetail } from '../../api/catalog';
     //      const detail = await fetchTableDetail(name);
     //      setSelectedTable(detail);
-    setTimeout(() => {
-      setSelectedTable(MOCK_TABLE_DETAIL[name] ?? null);
+    setTimeout(async () => {
+      const detail = await fetchTableDetail(name);
+      setSelectedTable(detail);
       setLoadingDetail(false);
     }, 300);
   };
