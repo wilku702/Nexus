@@ -48,6 +48,7 @@ import psycopg2
 from catalog.loader import CatalogLoader
 from agent.agent import handle_chat
 from audit.logger import get_recent_logs
+from eval.evaluate import load_test_cases, run_evaluation
 
 db = psycopg2.connect(Config.DATABASE_URL)
 catalog = CatalogLoader(Config.CATALOG_PATH)
@@ -63,6 +64,7 @@ except Exception as e:
     logger.warning("Failed to initialize agent: %s", e)
 
 chat_lock = threading.Lock()
+_latest_eval_report = None
 
 # ---------------------------------------------------------------------------
 # Routes
@@ -206,36 +208,24 @@ def get_audit_logs():
 
 @app.route("/api/evaluate", methods=["POST"])
 def run_eval():
-    """Trigger the full evaluation suite.
-
-    TODO: Implement. Steps:
-      1. Load test cases: load_test_cases("eval/test_cases.json")
-      2. Run evaluation: run_evaluation(agent, test_cases, db)
-      3. Optionally save results to a file or database
-      4. Return the full evaluation report as JSON
-
-    Response: { "run_id": "...", "summary": {...}, "by_difficulty": {...},
-                "test_cases": [...] }
-    """
-    # TODO: Implement evaluation trigger
-    pass
+    """Trigger the full evaluation suite."""
+    global _latest_eval_report
+    try:
+        test_cases = load_test_cases("eval/test_cases.json")
+        with chat_lock:
+            report = run_evaluation(agent, tool_context, test_cases, db)
+        _latest_eval_report = report
+        return jsonify(report)
+    except Exception as e:
+        return jsonify({"error": f"Evaluation failed: {e}"}), 500
 
 
 @app.route("/api/evaluate/results", methods=["GET"])
 def get_eval_results():
-    """Return the most recent evaluation run results.
-
-    TODO: Implement. Steps:
-      1. Load the most recent eval results
-         (from a JSON file, database, or in-memory cache)
-      2. If no results exist, return { "error": "No evaluation results" }
-         with status 404
-      3. Return as JSON
-
-    Response: Same shape as POST /api/evaluate
-    """
-    # TODO: Implement eval results retrieval
-    pass
+    """Return the most recent evaluation run results."""
+    if _latest_eval_report is None:
+        return jsonify({"error": "No evaluation results"}), 404
+    return jsonify(_latest_eval_report)
 
 
 # ---------------------------------------------------------------------------

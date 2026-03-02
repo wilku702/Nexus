@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 import { useEvalStore } from '../../stores/useEvalStore';
-import { MOCK_EVAL_REPORT } from '../../mocks/data';
+import { fetchEvalResults } from '../../api/evaluate';
 import { EvalStatusBanner } from './EvalStatusBanner';
 import { EvalSummaryCards } from './EvalSummaryCards';
 import { DifficultyBreakdown } from './DifficultyBreakdown';
@@ -12,15 +12,11 @@ export function EvalDashboard() {
   const { report, isRunning, error, setReport } = useEvalStore();
 
   useEffect(() => {
-    // TODO [WIRE-UP]: Replace mock data with a real API call.
-    // Endpoint: GET /api/evaluate/results
-    // Response: { run_id, timestamp, summary, by_difficulty, test_cases }
-    // Use: import { fetchEvalResults } from '../../api/evaluate';
-    //      const report = await fetchEvalResults();
-    //      setReport(report);
-    setTimeout(() => {
-      setReport(MOCK_EVAL_REPORT);
-    }, 300);
+    fetchEvalResults()
+      .then(setReport)
+      .catch(() => {
+        // 404 = no results yet, just show empty state
+      });
   }, [setReport]);
 
   return (

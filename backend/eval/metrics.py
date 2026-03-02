@@ -7,28 +7,11 @@ Four dimensions of quality:
   4. Governance       — was PII properly handled for the user role?
 """
 
+import re
+
 
 def score_sql_correctness(generated_sql: str, db_connection) -> bool:
     """Does the generated SQL execute without errors?
-
-    TODO: Implement. Steps:
-      1. If generated_sql is empty or None, return False
-      2. Wrap the SQL in a safety net:
-           - Add LIMIT 1 if no LIMIT exists (to avoid huge result sets)
-           - Use a savepoint so a failed query doesn't break the connection
-      3. Try executing the SQL
-      4. Return True if it runs successfully, False if it throws an error
-      5. Always rollback to the savepoint after (don't leave open transactions)
-
-    Example:
-      cursor.execute("SAVEPOINT test_sql")
-      try:
-          cursor.execute(generated_sql)
-          cursor.execute("RELEASE SAVEPOINT test_sql")
-          return True
-      except Exception:
-          cursor.execute("ROLLBACK TO SAVEPOINT test_sql")
-          return False
 
     Args:
         generated_sql: The SQL query to test
@@ -37,25 +20,26 @@ def score_sql_correctness(generated_sql: str, db_connection) -> bool:
     Returns:
         True if SQL executes without error
     """
-    # TODO: Try executing SQL and return success/failure
-    pass
+    if not generated_sql:
+        return False
+
+    sql = generated_sql.strip()
+    if not re.search(r'\bLIMIT\b', sql, re.IGNORECASE):
+        sql = sql.rstrip(';') + ' LIMIT 1'
+
+    cursor = db_connection.cursor()
+    cursor.execute("SAVEPOINT test_sql")
+    try:
+        cursor.execute(sql)
+        cursor.execute("RELEASE SAVEPOINT test_sql")
+        return True
+    except Exception:
+        cursor.execute("ROLLBACK TO SAVEPOINT test_sql")
+        return False
 
 
 def score_sql_accuracy(generated_sql: str, expected_contains: list[str]) -> float:
     """What fraction of expected keywords appear in the generated SQL?
-
-    TODO: Implement. Steps:
-      1. If expected_contains is empty, return 1.0 (nothing to check)
-      2. Convert generated_sql to uppercase for case-insensitive matching
-      3. For each keyword in expected_contains:
-         - Check if it appears in the SQL (case-insensitive)
-         - Count matches
-      4. Return: matched_count / len(expected_contains)
-
-    Example:
-      SQL: 'SELECT COUNT(*) FROM "Customer" WHERE "Country" = \'Brazil\''
-      expected: ["Customer", "COUNT", "Country", "Brazil"]
-      Result: 4/4 = 1.0
 
     Args:
         generated_sql: The SQL query to evaluate
@@ -64,18 +48,16 @@ def score_sql_accuracy(generated_sql: str, expected_contains: list[str]) -> floa
     Returns:
         Float between 0.0 and 1.0
     """
-    # TODO: Count keyword matches and return ratio
-    pass
+    if not expected_contains:
+        return 1.0
+
+    sql_upper = (generated_sql or "").upper()
+    matched = sum(1 for kw in expected_contains if kw.upper() in sql_upper)
+    return matched / len(expected_contains)
 
 
 def score_answer_accuracy(answer: str, expected_contains: list[str]) -> float:
     """What fraction of expected values appear in the answer text?
-
-    TODO: Implement. Same approach as score_sql_accuracy but applied
-    to the natural language answer.
-
-    Special case: If expected_contains is empty, return 1.0
-    (some test cases only check SQL, not the answer).
 
     Args:
         answer: The agent's natural language response
@@ -84,8 +66,12 @@ def score_answer_accuracy(answer: str, expected_contains: list[str]) -> float:
     Returns:
         Float between 0.0 and 1.0
     """
-    # TODO: Count value matches and return ratio
-    pass
+    if not expected_contains:
+        return 1.0
+
+    answer_upper = (answer or "").upper()
+    matched = sum(1 for val in expected_contains if val.upper() in answer_upper)
+    return matched / len(expected_contains)
 
 
 def check_governance_compliance(
@@ -96,16 +82,6 @@ def check_governance_compliance(
 ) -> bool:
     """Was PII properly handled for the given role?
 
-    TODO: Implement. Logic:
-      - If involves_pii is False → always return True (no PII concern)
-      - If involves_pii is True and role is "admin" → return True (admins see all)
-      - If involves_pii is True and role is "analyst":
-          → return True only if was_masked is True
-          → return False if PII was exposed to an analyst
-
-    This is the governance gate — it ensures that analyst-role queries
-    never leak raw PII values.
-
     Args:
         generated_sql: The SQL that was executed
         role: "analyst" or "admin"
@@ -115,5 +91,10 @@ def check_governance_compliance(
     Returns:
         True if governance rules were followed
     """
-    # TODO: Implement governance compliance check
-    pass
+    if not involves_pii:
+        return True
+    if role == "admin":
+        return True
+    if role == "analyst":
+        return was_masked
+    return True
