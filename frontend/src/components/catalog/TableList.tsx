@@ -14,8 +14,8 @@ export function TableList({ tables, selectedTableName, onSelect, isLoading }: Ta
       <div className="space-y-1 p-2">
         {Array.from({ length: 5 }).map((_, i) => (
           <div key={i} className="rounded-lg px-4 py-3 space-y-2">
-            <div className="h-4 w-2/3 animate-pulse rounded bg-slate-200" />
-            <div className="h-3 w-full animate-pulse rounded bg-slate-100" />
+            <div className="h-4 w-2/3 rounded skeleton-shimmer" />
+            <div className="h-3 w-full rounded skeleton-shimmer" />
           </div>
         ))}
       </div>

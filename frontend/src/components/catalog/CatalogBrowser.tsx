@@ -41,7 +41,7 @@ export function CatalogBrowser() {
 
   return (
     <div className="grid h-[calc(100vh-theme(spacing.14)-theme(spacing.20))] grid-cols-[320px_1fr]">
-      <div className="border-r border-slate-200 overflow-y-auto bg-white">
+      <div className="border-r border-border-primary overflow-y-auto bg-surface-secondary">
         <TableList
           tables={tables}
           selectedTableName={selectedTable?.table_name ?? null}

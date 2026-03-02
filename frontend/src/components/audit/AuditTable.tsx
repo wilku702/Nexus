@@ -1,4 +1,4 @@
-import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { ChevronLeft, ChevronRight, ChevronUp, ChevronDown } from 'lucide-react';
 import type { AuditLogEntry } from '../../types/api';
 import type { SortConfig, PaginationConfig } from '../../types/common';
 import { AuditRow } from './AuditRow';
@@ -30,21 +30,21 @@ export function AuditTable({ entries, sort, onSort, pagination, onPageChange, is
 
   if (isLoading) {
     return (
-      <div className="rounded-lg border border-slate-200 bg-white overflow-hidden">
+      <div className="rounded-lg border border-border-primary bg-surface-secondary overflow-hidden">
         <table className="w-full text-sm">
           <thead>
-            <tr className="bg-slate-50 border-b border-slate-200">
+            <tr className="bg-surface-tertiary border-b border-border-primary">
               {COLUMNS.map((c) => (
-                <th key={c.key} className="px-4 py-3 text-left font-semibold text-slate-600">{c.label}</th>
+                <th key={c.key} className="px-4 py-3 text-left font-semibold text-content-secondary">{c.label}</th>
               ))}
             </tr>
           </thead>
           <tbody>
             {Array.from({ length: 5 }).map((_, i) => (
-              <tr key={i} className="border-b border-slate-100">
+              <tr key={i} className="border-b border-border-secondary">
                 {COLUMNS.map((c) => (
                   <td key={c.key} className="px-4 py-3">
-                    <div className="h-4 w-3/4 animate-pulse rounded bg-slate-200" />
+                    <div className="h-4 w-3/4 rounded skeleton-shimmer" />
                   </td>
                 ))}
               </tr>
@@ -56,20 +56,20 @@ export function AuditTable({ entries, sort, onSort, pagination, onPageChange, is
   }
 
   return (
-    <div className="rounded-lg border border-slate-200 bg-white overflow-hidden">
+    <div className="rounded-lg border border-border-primary bg-surface-secondary overflow-hidden">
       <table className="w-full text-sm">
         <thead>
-          <tr className="bg-slate-50 border-b border-slate-200">
+          <tr className="bg-surface-tertiary border-b border-border-primary">
             {COLUMNS.map((c) => (
               <th
                 key={c.key}
-                className={`px-4 py-3 text-left font-semibold text-slate-600 ${c.sortable ? 'cursor-pointer select-none hover:text-slate-900' : ''}`}
+                className={`px-4 py-3 text-left font-semibold text-content-secondary ${c.sortable ? 'cursor-pointer select-none hover:text-content-primary' : ''}`}
                 onClick={c.sortable ? () => onSort(c.key) : undefined}
               >
-                <span className="inline-flex items-center gap-1">
+                <span className={`inline-flex items-center gap-1 ${c.sortable && sort.column === c.key ? 'text-accent' : ''}`}>
                   {c.label}
                   {c.sortable && sort.column === c.key && (
-                    <span className="text-xs">{sort.direction === 'asc' ? '\u25B2' : '\u25BC'}</span>
+                    sort.direction === 'asc' ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />
                   )}
                 </span>
               </th>
@@ -83,25 +83,25 @@ export function AuditTable({ entries, sort, onSort, pagination, onPageChange, is
         </tbody>
       </table>
 
-      <div className="flex items-center justify-between border-t border-slate-200 px-4 py-3">
-        <span className="text-sm text-slate-500">
+      <div className="flex items-center justify-between border-t border-border-primary px-4 py-3">
+        <span className="text-sm text-content-tertiary">
           Showing {start + 1}–{Math.min(start + pagination.pageSize, entries.length)} of {entries.length} entries
         </span>
         <div className="flex items-center gap-2">
           <button
             onClick={() => onPageChange(pagination.page - 1)}
             disabled={pagination.page <= 1}
-            className="rounded p-1 hover:bg-slate-100 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="rounded p-1 text-content-secondary hover:bg-surface-tertiary disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <ChevronLeft className="h-4 w-4" />
           </button>
-          <span className="text-sm text-slate-600">
+          <span className="text-sm text-content-secondary">
             Page {pagination.page} of {totalPages}
           </span>
           <button
             onClick={() => onPageChange(pagination.page + 1)}
             disabled={pagination.page >= totalPages}
-            className="rounded p-1 hover:bg-slate-100 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="rounded p-1 text-content-secondary hover:bg-surface-tertiary disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <ChevronRight className="h-4 w-4" />
           </button>

@@ -37,7 +37,7 @@ def db():
 class TestAgents:
     def test_agent(self, catalog, db):
         agent, tool_context = create_langchain_agent(catalog, db)
-        result = handle_chat(agent, tool_context, "How many customers are there?", "admin")
+        result = handle_chat(agent, tool_context, "How many customers are there?", "admin", db)
         print(result)
 
 # ---------------------------------------------------------------------------

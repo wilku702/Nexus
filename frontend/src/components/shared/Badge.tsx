@@ -15,21 +15,21 @@ interface BadgeProps {
 }
 
 const BADGE_CLASSES: Record<BadgeVariant, string> = {
-  'governance-public':     'bg-green-100 text-green-800 border-green-200',
-  'governance-internal':   'bg-blue-100 text-blue-800 border-blue-200',
-  'governance-restricted': 'bg-red-100 text-red-800 border-red-200',
-  'tag-pii':               'bg-red-50 text-red-700 border-red-200 font-semibold',
-  'tag-sensitive':         'bg-orange-50 text-orange-700 border-orange-200',
-  'tag-public':            'bg-green-50 text-green-700 border-green-200',
-  'status-healthy':        'bg-green-100 text-green-800',
-  'status-degraded':       'bg-yellow-100 text-yellow-800',
-  'status-down':           'bg-red-100 text-red-800',
-  'difficulty-easy':       'bg-green-50 text-green-700',
-  'difficulty-medium':     'bg-yellow-50 text-yellow-700',
-  'difficulty-hard':       'bg-red-50 text-red-700',
-  'role-analyst':          'bg-purple-100 text-purple-800',
-  'role-admin':            'bg-indigo-100 text-indigo-800',
-  'neutral':               'bg-neutral-100 text-neutral-600',
+  'governance-public':     'bg-green-500/15 text-green-400 border-green-800/30',
+  'governance-internal':   'bg-blue-500/15 text-blue-400 border-blue-800/30',
+  'governance-restricted': 'bg-red-500/15 text-red-400 border-red-800/30',
+  'tag-pii':               'bg-red-500/15 text-red-400 border-red-800/30 font-semibold',
+  'tag-sensitive':         'bg-orange-500/15 text-orange-400 border-orange-800/30',
+  'tag-public':            'bg-green-500/15 text-green-400 border-green-800/30',
+  'status-healthy':        'bg-green-500/15 text-green-400 border-green-800/30',
+  'status-degraded':       'bg-yellow-500/15 text-yellow-400 border-yellow-800/30',
+  'status-down':           'bg-red-500/15 text-red-400 border-red-800/30',
+  'difficulty-easy':       'bg-green-500/15 text-green-400 border-green-800/30',
+  'difficulty-medium':     'bg-yellow-500/15 text-yellow-400 border-yellow-800/30',
+  'difficulty-hard':       'bg-red-500/15 text-red-400 border-red-800/30',
+  'role-analyst':          'bg-purple-500/15 text-purple-400 border-purple-800/30',
+  'role-admin':            'bg-indigo-500/15 text-indigo-400 border-indigo-800/30',
+  'neutral':               'bg-neutral-500/15 text-neutral-400 border-neutral-700/30',
 };
 
 export function Badge({ variant, label, size = 'sm' }: BadgeProps) {

@@ -1,5 +1,6 @@
-import { NavLink } from 'react-router-dom';
+import { NavLink, useLocation } from 'react-router-dom';
 import { MessageSquare, Database, BarChart3, ClipboardList } from 'lucide-react';
+import { motion } from 'framer-motion';
 import { clsx } from 'clsx';
 
 const NAV_ITEMS = [
@@ -10,29 +11,39 @@ const NAV_ITEMS = [
 ] as const;
 
 export function Sidebar() {
+  const location = useLocation();
+
   return (
-    <aside className="flex w-60 flex-col bg-slate-900 text-slate-300">
-      <div className="flex h-14 items-center px-5 border-b border-slate-700">
-        <span className="text-lg font-bold text-white tracking-tight">NEXUS</span>
+    <aside className="sidebar-gradient flex w-60 flex-col bg-surface-sidebar text-content-secondary">
+      <div className="flex h-14 items-center px-5 border-b border-border-primary">
+        <span className="text-lg font-bold text-accent tracking-tight">NEXUS</span>
       </div>
       <nav className="flex-1 px-3 py-4 space-y-1">
-        {NAV_ITEMS.map(({ to, label, icon: Icon }) => (
-          <NavLink
-            key={to}
-            to={to}
-            className={({ isActive }) =>
-              clsx(
-                'flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors',
+        {NAV_ITEMS.map(({ to, label, icon: Icon }) => {
+          const isActive = location.pathname.startsWith(to);
+          return (
+            <NavLink
+              key={to}
+              to={to}
+              className={clsx(
+                'relative flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors duration-200',
                 isActive
-                  ? 'bg-slate-700 text-white'
-                  : 'text-slate-300 hover:bg-slate-800 hover:text-white',
-              )
-            }
-          >
-            <Icon className="h-5 w-5" />
-            {label}
-          </NavLink>
-        ))}
+                  ? 'text-content-primary'
+                  : 'text-content-secondary hover:bg-surface-secondary hover:text-content-primary',
+              )}
+            >
+              {isActive && (
+                <motion.span
+                  layoutId="nav-active"
+                  className="absolute inset-0 rounded-lg bg-accent/10 border-l-2 border-l-accent"
+                  transition={{ type: 'spring', bounce: 0.2, duration: 0.4 }}
+                />
+              )}
+              <Icon className="relative h-5 w-5" />
+              <span className="relative">{label}</span>
+            </NavLink>
+          );
+        })}
       </nav>
     </aside>
   );

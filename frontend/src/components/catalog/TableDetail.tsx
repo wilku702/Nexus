@@ -1,3 +1,4 @@
+import { motion } from 'framer-motion';
 import type { TableDetail as TableDetailType } from '../../types/api';
 import { GovernanceBadge } from './GovernanceBadge';
 import { ColumnRow } from './ColumnRow';
@@ -30,25 +31,30 @@ export function TableDetail({ table, isLoading }: TableDetailProps) {
   }
 
   return (
-    <div>
+    <motion.div
+      key={table.table_name}
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ duration: 0.3 }}
+    >
       <div className="mb-6">
         <div className="flex items-center gap-3">
-          <h2 className="text-xl font-bold text-slate-900">{table.table_name}</h2>
+          <h2 className="text-xl font-bold text-content-primary">{table.table_name}</h2>
           <GovernanceBadge level={table.governance_level} />
         </div>
-        <p className="mt-1 text-sm text-slate-600">{table.description}</p>
-        <p className="mt-1 text-xs text-slate-400">Owner: {table.owner}</p>
+        <p className="mt-1 text-sm text-content-secondary">{table.description}</p>
+        <p className="mt-1 text-xs text-content-tertiary">Owner: {table.owner}</p>
       </div>
 
-      <div className="overflow-x-auto rounded-lg border border-slate-200">
+      <div className="overflow-x-auto rounded-lg border border-border-primary">
         <table className="w-full text-sm">
           <thead>
-            <tr className="bg-slate-50 border-b border-slate-200">
-              <th scope="col" className="px-4 py-3 text-left font-semibold text-slate-600">Column</th>
-              <th scope="col" className="px-4 py-3 text-left font-semibold text-slate-600">Type</th>
-              <th scope="col" className="px-4 py-3 text-left font-semibold text-slate-600">Description</th>
-              <th scope="col" className="px-4 py-3 text-left font-semibold text-slate-600">PII</th>
-              <th scope="col" className="px-4 py-3 text-left font-semibold text-slate-600">Samples</th>
+            <tr className="bg-surface-sidebar border-b border-border-primary">
+              <th scope="col" className="px-4 py-3 text-left font-semibold text-content-secondary">Column</th>
+              <th scope="col" className="px-4 py-3 text-left font-semibold text-content-secondary">Type</th>
+              <th scope="col" className="px-4 py-3 text-left font-semibold text-content-secondary">Description</th>
+              <th scope="col" className="px-4 py-3 text-left font-semibold text-content-secondary">PII</th>
+              <th scope="col" className="px-4 py-3 text-left font-semibold text-content-secondary">Samples</th>
             </tr>
           </thead>
           <tbody>
@@ -58,6 +64,6 @@ export function TableDetail({ table, isLoading }: TableDetailProps) {
           </tbody>
         </table>
       </div>
-    </div>
+    </motion.div>
   );
 }

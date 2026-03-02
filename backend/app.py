@@ -14,6 +14,7 @@ Run with:
 """
 
 import logging
+import threading
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 from config import Config
@@ -61,6 +62,8 @@ try:
 except Exception as e:
     logger.warning("Failed to initialize agent: %s", e)
 
+chat_lock = threading.Lock()
+
 # ---------------------------------------------------------------------------
 # Routes
 # ---------------------------------------------------------------------------
@@ -89,9 +92,9 @@ def chat():
       
       if not question or not role:
         return jsonify({ "error": "Empty role or question" }), 500
-      
-      tool_context = {}
-      response = handle_chat(agent, tool_context, question, role, db)
+
+      with chat_lock:
+          response = handle_chat(agent, tool_context, question, role, db)
       return jsonify(response), 200
     except Exception as e:
       return jsonify({ "error": f"Error loading agent: {e}" }), 500

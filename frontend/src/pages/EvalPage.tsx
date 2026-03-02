@@ -5,7 +5,7 @@ import { useEvalStore } from '../stores/useEvalStore';
 import { MOCK_EVAL_REPORT } from '../mocks/data';
 
 export function EvalPage() {
-  const { isRunning, setRunning, setReport, setError } = useEvalStore();
+  const { isRunning, report, setRunning, setReport, setError } = useEvalStore();
 
   const handleRun = async () => {
     setRunning(true);
@@ -29,7 +29,16 @@ export function EvalPage() {
 
   return (
     <PageWrapper
-      title="Evaluations"
+      title={
+        <>
+          Evaluations
+          {report && !isRunning && (
+            <span className="text-xs text-content-tertiary ml-3 font-normal">
+              Last run: {new Date(report.timestamp).toLocaleString()}
+            </span>
+          )}
+        </>
+      }
       action={<RunEvalButton onRun={handleRun} isRunning={isRunning} />}
     >
       <EvalDashboard />

@@ -14,7 +14,7 @@ const SIZE_CLASSES = {
 export function LoadingSpinner({ size = 'md', className }: LoadingSpinnerProps) {
   return (
     <svg
-      className={clsx('animate-spin text-blue-600', SIZE_CLASSES[size], className)}
+      className={clsx('animate-spin text-accent', SIZE_CLASSES[size], className)}
       xmlns="http://www.w3.org/2000/svg"
       fill="none"
       viewBox="0 0 24 24"

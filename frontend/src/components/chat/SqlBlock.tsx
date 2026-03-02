@@ -20,7 +20,7 @@ export function SqlBlock({ sql }: SqlBlockProps) {
     <div className="relative rounded-lg overflow-hidden">
       <button
         onClick={handleCopy}
-        className="absolute right-2 top-2 z-10 rounded p-1.5 text-slate-400 hover:bg-slate-700 hover:text-white transition-colors"
+        className="absolute right-2 top-2 z-10 rounded p-1.5 text-content-tertiary hover:bg-surface-tertiary hover:text-content-primary transition-colors"
         aria-label={copied ? 'Copied' : 'Copy SQL'}
       >
         {copied ? <Check className="h-4 w-4 text-green-400" /> : <Copy className="h-4 w-4" />}
@@ -28,7 +28,7 @@ export function SqlBlock({ sql }: SqlBlockProps) {
       <SyntaxHighlighter
         language="sql"
         style={vscDarkPlus}
-        customStyle={{ margin: 0, borderRadius: '0.5rem', fontSize: '0.8125rem', maxHeight: '200px' }}
+        customStyle={{ margin: 0, borderRadius: '0.5rem', fontSize: '0.8125rem', maxHeight: '240px', background: '#16161a', padding: '12px 16px' }}
       >
         {sql}
       </SyntaxHighlighter>

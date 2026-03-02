@@ -15,12 +15,12 @@ export function TestCaseTable({ testCases }: TestCaseTableProps) {
       <div className="overflow-x-auto -m-5">
         <table className="w-full text-sm">
           <thead>
-            <tr className="border-b border-slate-200 bg-slate-50">
-              <th scope="col" className="px-4 py-3 text-left font-semibold text-slate-600 w-10">Result</th>
-              <th scope="col" className="px-4 py-3 text-left font-semibold text-slate-600 w-24">Difficulty</th>
-              <th scope="col" className="px-4 py-3 text-left font-semibold text-slate-600">Question</th>
-              <th scope="col" className="px-4 py-3 text-left font-semibold text-slate-600 w-20">Latency</th>
-              <th scope="col" className="px-4 py-3 text-left font-semibold text-slate-600 w-24">SQL Acc.</th>
+            <tr className="border-b border-border-primary bg-surface-tertiary">
+              <th scope="col" className="px-4 py-3 text-left font-semibold text-content-secondary w-10">Result</th>
+              <th scope="col" className="px-4 py-3 text-left font-semibold text-content-secondary w-24">Difficulty</th>
+              <th scope="col" className="px-4 py-3 text-left font-semibold text-content-secondary">Question</th>
+              <th scope="col" className="px-4 py-3 text-left font-semibold text-content-secondary w-20">Latency</th>
+              <th scope="col" className="px-4 py-3 text-left font-semibold text-content-secondary w-24">SQL Acc.</th>
               <th scope="col" className="px-4 py-3 w-8"></th>
             </tr>
           </thead>

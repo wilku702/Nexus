@@ -13,18 +13,18 @@ export function TableListItem({ table, isSelected, onClick }: TableListItemProps
     <button
       onClick={onClick}
       className={clsx(
-        'w-full text-left px-4 py-3 border-b border-slate-100 transition-colors',
+        'w-full text-left px-4 py-3 border-b border-border-secondary transition-all duration-200',
         isSelected
-          ? 'bg-blue-50 border-l-[3px] border-l-blue-600'
-          : 'hover:bg-slate-50 border-l-[3px] border-l-transparent',
+          ? 'bg-accent-muted border-l-[3px] border-l-accent'
+          : 'hover:bg-surface-tertiary hover:border-l-accent/30 border-l-[3px] border-l-transparent',
       )}
     >
       <div className="flex items-center justify-between">
-        <span className="font-semibold text-sm text-slate-900">{table.table_name}</span>
+        <span className="font-semibold text-sm text-content-primary">{table.table_name}</span>
         <GovernanceBadge level={table.governance_level} />
       </div>
-      <p className="mt-0.5 text-xs text-slate-500 truncate">{table.description}</p>
-      <span className="mt-1 text-xs text-slate-400">{table.column_count} columns</span>
+      <p className="mt-0.5 text-xs text-content-secondary truncate">{table.description}</p>
+      <span className="mt-1 text-xs text-content-tertiary">{table.column_count} columns</span>
     </button>
   );
 }
