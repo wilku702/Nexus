@@ -63,6 +63,7 @@ def create_langchain_agent(catalog: CatalogLoader, db_connection):
         """Execute validated SQL against PostgreSQL and return results."""
         result = execute_sql(sql, db_connection)
         tool_context["execution"] = result
+        tool_context["row_count"] = result["row_count"]
         return result
 
     @tool
@@ -79,7 +80,7 @@ def create_langchain_agent(catalog: CatalogLoader, db_connection):
     
 
 
-def handle_chat(agent, tool_context, question: str, role: str):
+def handle_chat(agent, tool_context, question: str, role: str, db_connection):
     """Process a user question through the agent and return the response.
 
     This is the function called by the POST /api/chat route.
@@ -94,6 +95,15 @@ def handle_chat(agent, tool_context, question: str, role: str):
         Dict matching the ChatResponse API contract
     """
     start = time.time()
+    log_entry = {
+        "user_role": role,
+        "original_question": question,
+        "generated_sql": "",
+        "was_pii_filtered": False if role == "admin" else True,
+        "result_row_count": 0,
+        "latency_ms": 0,
+        "llm_model_used": Config.LLM_MODEL,
+    }
 
     # Combine role context and question
     full_prompt = f"[User Role: {role}]\nQuestion: {question}"
@@ -109,23 +119,24 @@ def handle_chat(agent, tool_context, question: str, role: str):
         validation = tool_context.get("validation", {})
         sql = validation.get("sql", "") if validation.get("valid") else ""
         tables_used = validation.get("tables_used", []) if validation.get("valid") else []
-
-        latency_ms = int((time.time() - start) * 1000)
+        log_entry["generated_sql"] = sql
+        log_entry["result_row_count"] = tool_context.get("row_count", 0)
         
-        log_query(db_connection=)
-
+        log_entry["latency_ms"] = int((time.time() - start) * 1000)
         return {
             "answer": final_answer,
             "sql": sql,
             "tables_used": tables_used,
-            "latency_ms": latency_ms
+            "latency_ms": log_entry["latency_ms"]
         }
 
     except Exception as e:
-        latency_ms = int((time.time() - start) * 1000)
+        log_entry["latency_ms"] = int((time.time() - start) * 1000)
         return {
             "answer": f"I encountered an error: {str(e)}",
             "sql": "",
             "tables_used": [],
-            "latency_ms": latency_ms
+            "latency_ms": log_entry["latency_ms"]
         }
+    finally:
+        log_query(db_connection, log_entry)

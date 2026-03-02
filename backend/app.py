@@ -45,7 +45,8 @@ CORS(app)
 # ---------------------------------------------------------------------------
 import psycopg2
 from catalog.loader import CatalogLoader
-from agent import handle_chat
+from agent.agent import handle_chat
+from audit.logger import get_recent_logs
 
 db = psycopg2.connect(Config.DATABASE_URL)
 catalog = CatalogLoader(Config.CATALOG_PATH)
@@ -89,7 +90,8 @@ def chat():
       if not question or not role:
         return jsonify({ "error": "Empty role or question" }), 500
       
-      response = handle_chat(agent, question, role)
+      tool_context = {}
+      response = handle_chat(agent, tool_context, question, role, db)
       return jsonify(response), 200
     except Exception as e:
       return jsonify({ "error": f"Error loading agent: {e}" }), 500
@@ -194,6 +196,8 @@ def get_audit_logs():
     """
     # TODO: Implement audit log retrieval
     # pass
+    
+    return jsonify(get_recent_logs(db, limit=50))
     
 
 

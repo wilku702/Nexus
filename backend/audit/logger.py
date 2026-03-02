@@ -4,8 +4,6 @@ Every question asked through the agent gets logged to the query_log table.
 This powers the Audit Log Viewer in the frontend.
 """
 
-from psycopg2.extras import RealDictCursor
-
 def log_query(db_connection, entry: dict) -> None:
     """Insert a query log entry into the query_log table.
 
@@ -97,7 +95,7 @@ def get_recent_logs(db_connection, limit: int = 50) -> list[dict]:
             raw = dict(zip(columns, row))
             logs.append({
                 "id": str(raw["id"]),
-                "timestamp": raw["timestamp"].isoformat(),
+                "timestamp": raw["timestamp"].isoformat() + "Z",
                 "user_role": raw["user_role"],
                 "original_question": raw["original_question"],
                 "generated_sql": raw["generated_sql"],
