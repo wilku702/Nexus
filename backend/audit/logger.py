@@ -4,6 +4,7 @@ Every question asked through the agent gets logged to the query_log table.
 This powers the Audit Log Viewer in the frontend.
 """
 
+from psycopg2.extras import RealDictCursor
 
 def log_query(db_connection, entry: dict) -> None:
     """Insert a query log entry into the query_log table.
@@ -28,7 +29,22 @@ def log_query(db_connection, entry: dict) -> None:
         entry: Dict with the fields listed above
     """
     # TODO: INSERT into query_log table
-    pass
+    # pass
+    try:
+        cursor = db_connection.cursor()
+        cursor.execute(
+            """INSERT INTO query_log
+            (user_role, original_question, generated_sql, was_pii_filtered,
+                result_row_count, latency_ms, llm_model_used)
+            VALUES (%s, %s, %s, %s, %s, %s, %s)""",
+            (entry["user_role"], entry["original_question"], entry["generated_sql"],
+             entry["was_pii_filtered"], entry["result_row_count"], entry["latency_ms"],
+             entry["llm_model_used"])
+        )
+        db_connection.commit()
+    except Exception as e:
+        db_connection.rollback()
+        print(f"An error logging: {e}")
 
 
 def get_recent_logs(db_connection, limit: int = 50) -> list[dict]:
@@ -65,4 +81,33 @@ def get_recent_logs(db_connection, limit: int = 50) -> list[dict]:
         List of dicts matching the API contract
     """
     # TODO: Query and return recent audit logs
-    pass
+    # pass
+    try:
+        cursor = db_connection.cursor()
+        cursor.execute(
+            """SELECT * FROM query_log ORDER BY timestamp DESC LIMIT %s""",
+            (limit,)
+        )
+        
+        columns = [desc[0] for desc in cursor.description]
+        rows = cursor.fetchall()
+        
+        logs = []
+        for row in rows:
+            raw = dict(zip(columns, row))
+            logs.append({
+                "id": str(raw["id"]),
+                "timestamp": raw["timestamp"].isoformat(),
+                "user_role": raw["user_role"],
+                "original_question": raw["original_question"],
+                "generated_sql": raw["generated_sql"],
+                "was_pii_filtered": raw["was_pii_filtered"],
+                "result_row_count": raw["result_row_count"],
+                "latency_ms": raw["latency_ms"],
+                "llm_model_used": raw["llm_model_used"],
+            })
+        
+        return logs
+    except Exception as e:
+        print(f"Error getting recent logs: {e}")
+        return []

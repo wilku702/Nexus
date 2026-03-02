@@ -45,14 +45,16 @@ CORS(app)
 # ---------------------------------------------------------------------------
 import psycopg2
 from catalog.loader import CatalogLoader
+from agent import handle_chat
 
 db = psycopg2.connect(Config.DATABASE_URL)
 catalog = CatalogLoader(Config.CATALOG_PATH)
 
 agent = None
+tool_context = None
 try:
     from agent.agent import create_langchain_agent
-    agent = create_langchain_agent(catalog, db)
+    agent, tool_context = create_langchain_agent(catalog, db)
     if agent is None:
         logger.warning("create_langchain_agent() returned None — agent not yet implemented")
 except Exception as e:
@@ -79,7 +81,18 @@ def chat():
     """
     # # TODO: Implement chat endpoint
     # pass
-
+    try:
+      data = request.get_json()
+      question = data.get('question','')
+      role = data.get('role','')
+      
+      if not question or not role:
+        return jsonify({ "error": "Empty role or question" }), 500
+      
+      response = handle_chat(agent, question, role)
+      return jsonify(response), 200
+    except Exception as e:
+      return jsonify({ "error": f"Error loading agent: {e}" }), 500
 
 
 
@@ -180,7 +193,8 @@ def get_audit_logs():
     Response: [{ "id": "...", "timestamp": "...", "user_role": "...", ... }, ...]
     """
     # TODO: Implement audit log retrieval
-    pass
+    # pass
+    
 
 
 @app.route("/api/evaluate", methods=["POST"])

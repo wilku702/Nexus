@@ -23,6 +23,7 @@ from agent.tools import (
 from langchain.agents import create_agent
 from langchain.messages import HumanMessage
 from agent.prompts import SYSTEM_PROMPT
+from audit.logger import log_query
 
 
 def create_langchain_agent(catalog: CatalogLoader, db_connection):
@@ -35,6 +36,8 @@ def create_langchain_agent(catalog: CatalogLoader, db_connection):
     Returns:
         A LangChain agent ready to handle questions
     """
+
+    tool_context = {}
 
     llm = ChatAnthropic(model=Config.LLM_MODEL, api_key=Config.LLM_API_KEY)
 
@@ -51,12 +54,16 @@ def create_langchain_agent(catalog: CatalogLoader, db_connection):
     @tool
     def sql_validate(sql: str, role: str) -> dict:
         """Safety-check generated SQL before execution."""
-        return validate_sql(sql, role, catalog)
+        result = validate_sql(sql, role, catalog)
+        tool_context["validation"] = result
+        return result
 
     @tool
     def sql_execute(sql: str) -> dict:
         """Execute validated SQL against PostgreSQL and return results."""
-        return execute_sql(sql, db_connection)
+        result = execute_sql(sql, db_connection)
+        tool_context["execution"] = result
+        return result
 
     @tool
     def answer_synthesize(question: str, sql: str, results: dict) -> str:
@@ -67,43 +74,19 @@ def create_langchain_agent(catalog: CatalogLoader, db_connection):
 
     agent = create_agent(model=llm, tools=tools, system_prompt=SYSTEM_PROMPT)
 
-    return agent
+    return agent, tool_context
     
     
 
 
-def handle_chat(agent, question: str, role: str):
+def handle_chat(agent, tool_context, question: str, role: str):
     """Process a user question through the agent and return the response.
 
     This is the function called by the POST /api/chat route.
 
-    TODO: Implement. Steps:
-      1. Record the start time (for latency measurement)
-      2. Invoke the agent:
-           result = agent.invoke({"input": question, "role": role})
-      3. Extract from the result:
-           - answer (the final text response)
-           - sql (the generated SQL query)
-           - tables_used (list of table names referenced)
-      4. Calculate latency_ms = (time.time() - start) * 1000
-      5. Log to audit trail:
-           from audit.logger import log_query
-           log_query(db_connection, {...})
-      6. Return the response dict matching the API contract:
-           {
-               "answer": str,
-               "sql": str,
-               "tables_used": list[str],
-               "latency_ms": int
-           }
-
-    Edge cases:
-      - Agent raises an exception → return a friendly error message
-      - Agent can't answer → return "I couldn't find an answer" with empty SQL
-      - SQL validation fails → return the validation error as the answer
-
     Args:
         agent: The LangChain AgentExecutor from create_langchain_agent()
+        tool_context: Shared dict populated by tool closures during agent.invoke()
         question: The user's natural language question
         role: "analyst" or "admin"
 
@@ -111,27 +94,33 @@ def handle_chat(agent, question: str, role: str):
         Dict matching the ChatResponse API contract
     """
     start = time.time()
-    
+
     # Combine role context and question
     full_prompt = f"[User Role: {role}]\nQuestion: {question}"
-    
+
     try:
+        tool_context.clear()
         result = agent.invoke({
             "messages": [HumanMessage(content=full_prompt)]
         })
-        
+
         final_answer = result["messages"][-1].content
+
+        validation = tool_context.get("validation", {})
+        sql = validation.get("sql", "") if validation.get("valid") else ""
+        tables_used = validation.get("tables_used", []) if validation.get("valid") else []
+
         latency_ms = int((time.time() - start) * 1000)
         
-        # TODO: Parse sql and tables_used from intermediate steps
-        
+        log_query(db_connection=)
+
         return {
-            "answer": result,
-            "sql": "", 
-            "tables_used": [],
+            "answer": final_answer,
+            "sql": sql,
+            "tables_used": tables_used,
             "latency_ms": latency_ms
         }
-        
+
     except Exception as e:
         latency_ms = int((time.time() - start) * 1000)
         return {

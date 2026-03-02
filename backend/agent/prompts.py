@@ -48,6 +48,7 @@ Write a PostgreSQL query to answer this question: {question}
 User role: {role}
 
 Rules:
+- Never use SELECT *, always list columns explicitly
 - Use ONLY the tables and columns listed in the schema above.
 - Use PostgreSQL syntax. Column names are snake_case — no double-quoting needed.
 - Always include a LIMIT clause (default LIMIT 50).

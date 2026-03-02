@@ -7,7 +7,7 @@ import { ChatInput } from './ChatInput';
 import { MessageSquare } from 'lucide-react';
 import { EmptyState } from '../shared/EmptyState';
 
-const USE_MOCKS = true;
+const USE_MOCKS = false;
 
 export function ChatWindow() {
   const { messages, isLoading, addUserMessage, addAssistantMessage, addErrorMessage, setLoading } = useChatStore();

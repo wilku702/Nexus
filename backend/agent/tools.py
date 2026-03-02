@@ -166,7 +166,7 @@ def validate_sql(sql: str, role: str, catalog: CatalogLoader) -> dict:
     if not has_limit:
         sql += f' LIMIT {Config.MAX_QUERY_ROWS}'
 
-    return {"valid": True, "sql": sql}
+    return {"valid": True, "sql": sql, "tables_used": referenced_tables}
 
 # ---------------------------------------------------------------------------
 # Tool 4: execute_sql

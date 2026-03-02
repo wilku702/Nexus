@@ -555,7 +555,7 @@ print(result)
    - Wrap in try/except to catch agent errors
 2. Test with curl:
    ```bash
-   curl -X POST http://localhost:5000/api/chat \
+   curl -X POST http://localhost:5173/api/chat \
      -H "Content-Type: application/json" \
      -d '{"question": "How many customers?", "role": "admin"}'
    ```
